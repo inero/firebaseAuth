@@ -6,20 +6,19 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-web";
-import { useNavigation } from "@react-navigation/core";
 import { firebase } from "../../firebase";
 
-const LoginScreen = () => {
+const LoginScreen = ({ navigation }) => {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigation = useNavigation();
+
   const auth = firebase.getAuth();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        navigation.replace("Home");
+        navigation.replace("HomeStack");
       }
     });
     return unsubscribe;
@@ -54,82 +53,77 @@ const LoginScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Email"
-          value={email}
-          style={styles.input}
-          onChange={(e) => setEmail(e.target.value)}
-        ></TextInput>
-        <TextInput
-          placeholder="Password"
-          value={password}
-          secureTextEntry
-          style={styles.input}
-          onChange={(e) => setPassword(e.target.value)}
-        ></TextInput>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={text => setEmail(text)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        secureTextEntry={true}
+        value={password}
+        onChangeText={text => setPassword(text)}
+      />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleSignIn} style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSignup}
-          style={[styles.button, styles.buttonOutline]}
-        >
-          <Text style={styles.buttonOutlineText}>Register</Text>
+        <TouchableOpacity onPress={handleSignup} style={styles.button}>
+          <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 export default LoginScreen;
 
 const styles = StyleSheet.create({
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
   inputContainer: {
     width: "80%",
   },
   input: {
-    backgroundColor: "white",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginTop: 5,
+    width: '80%',
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#cccccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   buttonContainer: {
-    width: "60%",
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 40,
+    display: 'flex',
+    flexDirection: 'column',
   },
   button: {
-    backgroundColor: "blue",
-    width: "100%",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  buttonOutline: {
-    backgroundColor: "white",
-    marginTop: 5,
-    borderColor: "blue",
-    borderWidth: 2,
+    width: '80%',
+    backgroundColor: '#007bff',
+    padding: 10,
+    paddingBottom: 10,
+    borderRadius: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
   buttonText: {
-    color: "white",
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: 700,
-  },
-  buttonOutlineText: {
-    color: "blue",
-    fontSize: 16,
-    fontWeight: 700,
   },
 });
