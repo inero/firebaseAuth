@@ -1,18 +1,32 @@
 import 'react-native-gesture-handler';
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from '@react-navigation/stack';
-import LoginScreen from "./screens/auth/LoginScreen";
-import DashboardStack from "./screens/exptra/DashboardStack";
+import FlashMessage from "react-native-flash-message";
+import { ActionSheetProvider } from "@expo/react-native-action-sheet";
+import Routes from "./src/routes/Routes";
+import { firebase } from "./firebase";
+import { useState, useEffect } from "react";
 
-const Stack = createStackNavigator();
+
 
 export default function App() {
+  const auth = firebase.getAuth();
+  
+  const [currentUser, setCurrentUser] = useState(auth?.currentUser);
+
+	useEffect(() => {
+		const unsubscribe = auth.onAuthStateChanged((user) => {
+		  if (user) {
+			  setCurrentUser(user);
+		  }
+		});
+		return unsubscribe;
+	}, []);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen options={{ headerShown: false }} name="Login" component={LoginScreen} />
-        <Stack.Screen options={{ headerShown: false }} name="HomeStack" component={DashboardStack} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ActionSheetProvider>
+			<>
+				<Routes user={currentUser} />
+				<FlashMessage position="top" />
+			</>
+		</ActionSheetProvider>
   );
 }
