@@ -6,9 +6,9 @@ import {
 	orderBy,
 	query,
 } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 
-// import JaugeDepenses from "../components/JaugeDepenses";
+import GaugeExpenses from "../components/GaugeExpenses";
 import { StatusBar } from "expo-status-bar";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 
@@ -35,6 +35,8 @@ const nextMonth = () => {
 	return date;
 };
 
+const auth = firebase.getAuth();
+
 const Dashboard = () => {
 	const user = auth?.currentUser;
 
@@ -45,51 +47,48 @@ const Dashboard = () => {
 	// 	query(collection(db, "users", user.uid, "categories"))
 	// );
 
-	const [depenses, loadingDepenses, errorDepenses] = [];
+	const [expenses, loadingExpenses, errorExpenses] = [];
 	// useCollectionData(
-	// 	query(collection(db, "users", user.uid, "depenses"))
+	// 	query(collection(db, "users", user.uid, "expenses"))
 	// );
 
 	const budgetMax = () => {
-		return categories.reduce((total, categorie) => total + categorie.limite, 0);
+		return categories.reduce((total, category) => total + category.limit, 0);
 	};
 
-	const depensesTotales = () => {
+	const expensesTotal = () => {
 		const p = previousMonth();
 		const n = nextMonth();
 
-		return depenses
-			.filter((depense) => {
-				const d = depense.date.toDate();
+		return expenses
+			.filter((expense) => {
+				const d = expense.date.toDate();
 				d.setMilliseconds(0);
 
 				return d > p && d < n;
 			})
-			.reduce((total, depense) => total + depense.montant, 0);
+			.reduce((total, expense) => total + expense.montant, 0);
 	};
 
-	const dpt = depenses ? depensesTotales() : 0;
+	const dpt = expenses ? expensesTotal() : 0;
 	const max = categories ? budgetMax() : 0;
-	const pourcentage =
-		depenses && categories && depenses.length > 0
-			? Math.round((depensesTotales() / budgetMax()) * 100)
+	const percentage = expenses && categories && expenses.length > 0
+			? Math.round((expensesTotal() / budgetMax()) * 100)
 			: 0;
 
-	// Dernières dépenses
-
-	const [depensesRecentes, loading, error] = [];
+	const [latestExpenses, loading, error] = [];
 	// useCollectionData(
 	// 	query(
-	// 		collection(db, "users", user.uid, "depenses"),
+	// 		collection(db, "users", user.uid, "expenses"),
 	// 		orderBy("date", "desc"),
 	// 		limit(5)
 	// 	)
 	// );
 
-	const renderDepense = ({ item }) => (
-		<View style={styles.depense}>
+	const renderExpense = ({ item }) => (
+		<View style={styles.expense}>
 			<Text style={{ fontSize: 16 }}>{item.nom}</Text>
-			<Text style={{ fontSize: 16 }}>{item.montant} €</Text>
+			<Text style={{ fontSize: 16 }}>{item.montant} ₹</Text>
 		</View>
 	);
 
@@ -101,21 +100,21 @@ const Dashboard = () => {
 					{
 						alignItems: "center",
 						justifyContent: "center",
-						backgroundColor: "#5DB075",
+						backgroundColor: "#2a3e48",
 					},
 				]}>
-				{/* <JaugeDepenses dpt={dpt} max={max} pourcentage={pourcentage} /> */}
+				<GaugeExpenses dpt={dpt} max={max} percentage={percentage} />
 			</View>
 
 			<View style={styles.semi}>
-				<View style={styles.dernieresDepenses}>
-					<Text style={styles.title}>Latest expenses</Text>
+				<View style={styles.latestExpenses}>
+					<Text style={styles.title}>Recent expenses</Text>
 
-					{depensesRecentes && (
+					{latestExpenses && (
 						<FlatList
-							style={styles.listeDepenses}
-							data={depensesRecentes}
-							renderItem={renderDepense}
+							style={styles.listExpenses}
+							data={latestExpenses}
+							renderItem={renderExpense}
 							keyExtractor={(_item, index) => index}
 							ListEmptyComponent={() => (
 								<View style={styles.container}>
@@ -135,7 +134,7 @@ const Dashboard = () => {
 
 					{error && (
 						<View style={styles.container}>
-							<Text>Erreur : {JSON.stringify(error)}</Text>
+							<Text>Error : {JSON.stringify(error)}</Text>
 						</View>
 					)}
 				</View>
@@ -148,7 +147,7 @@ const Dashboard = () => {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#fff",
+		backgroundColor: "#dceaf0",
 		alignItems: "center",
 		justifyContent: "center",
 	},
@@ -156,23 +155,23 @@ const styles = StyleSheet.create({
 	semi: { flex: 1, alignSelf: "stretch" },
 
 	title: {
-		fontSize: 30,
+		fontSize: 24,
 		fontWeight: "500",
 		alignSelf: "flex-start",
 	},
 
-	dernieresDepenses: {
+	latestExpenses: {
 		flex: 1,
 		paddingTop: 25,
 		paddingLeft: 20, // 16 avec icône couleur
 		paddingRight: 20, // 16
 	},
 
-	listeDepenses: {
+	listExpenses: {
 		marginTop: 32,
 	},
 
-	depense: {
+	expense: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		borderBottomWidth: 1,

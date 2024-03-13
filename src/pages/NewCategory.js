@@ -6,39 +6,41 @@ import {
 	View,
 } from "react-native";
 import { addDoc, collection, updateDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
 
+const auth = firebase.getAuth();
+
 const NewCategory = ({ navigation }) => {
 	const user = auth.currentUser;
 
-	const [nom, setNom] = useState("");
-	const [limite, setLimite] = useState("");
+	const [name, setName] = useState("");
+	const [limit, setLimit] = useState("");
 
-	const usersCollectionRef = collection(db, "users", user?.uid, "categories");
+	const usersCollectionRef = []; //collection(db, "users", user?.uid, "categories");
 
-	const creerCategorie = async () => {
-		if (!(nom.trim().length > 0 && limite.trim().length > 0)) {
+	const createCategory = async () => {
+		if (!(name.trim().length > 0 && limit.trim().length > 0)) {
 			showMessage({
-				message: "Veuillez remplir tous les champs",
+				message: "Please complete all fields",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (isNaN(parseFloat(limite)) || parseFloat(limite) <= 0.0) {
+		if (isNaN(parseFloat(limit)) || parseFloat(limit) <= 0.0) {
 			showMessage({
-				message: "La limite doit être un nombre supérieur à 0",
+				message: "Limit must be a number greater than 0",
 				type: "danger",
 			});
 			return;
 		}
 
 		const docRef = await addDoc(usersCollectionRef, {
-			nom: nom,
-			limite: parseFloat(limite),
+			name,
+			limit: parseFloat(limit),
 		});
 
 		await updateDoc(docRef, { id: docRef.id });
@@ -50,25 +52,25 @@ const NewCategory = ({ navigation }) => {
 			<View style={styles.form}>
 				<TextInput
 					style={styles.input}
-					placeholder="Nom de la catégorie"
-					onChangeText={setNom}
+					placeholder="Category name"
+					onChangeText={setName}
 					maxLength={30}
 				/>
 
 				<TextInput
 					style={styles.input}
-					placeholder="Budget"
-					onChangeText={setLimite}
+					placeholder="Limit"
+					onChangeText={setLimit}
 					keyboardType={"numeric"}
 					maxLength={6}
 				/>
 
 				<TouchableOpacity
 					onPress={async () => {
-						await creerCategorie(nom, limite);
+						await createCategory(name, limit);
 					}}>
 					<View style={styles.button}>
-						<Text style={styles.buttonText}>Ajouter</Text>
+						<Text style={styles.buttonText}>Add</Text>
 					</View>
 				</TouchableOpacity>
 			</View>

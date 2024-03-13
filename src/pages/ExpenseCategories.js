@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 import { collection, deleteDoc, doc, query, where } from "firebase/firestore";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -17,20 +17,22 @@ function formatDate(date) {
 	}/${year}`;
 }
 
-const ExpenseCategories = ({ navigation, route }) => {
-	const user = auth.currentUser;
+const auth = firebase.getAuth();
 
-	const [depenses] = [];
+const ExpenseCategories = ({ navigation, route }) => {
+	const user = auth?.currentUser;
+
+	const [expenses] = [];
 	// useCollectionData(
 	// 	query(
-	// 		collection(db, "users", user.uid, "depenses"),
-	// 		where("categorie", "==", route.params.categorie)
+	// 		collection(db, "users", user.uid, "expenses"),
+	// 		where("category", "==", route.params.category)
 	// 	)
 	// );
 
-	const renderDepense = ({ item }) => (
-		<View style={styles.depense}>
-			<Text style={{ flex: 1, fontSize: 16, paddingLeft: 10 }}>{item.nom}</Text>
+	const renderExpense = ({ item }) => (
+		<View style={styles.expense}>
+			<Text style={{ flex: 1, fontSize: 16, paddingLeft: 10 }}>{item.name}</Text>
 			<View
 				style={{
 					flex: 1,
@@ -38,7 +40,7 @@ const ExpenseCategories = ({ navigation, route }) => {
 					justifyContent: "space-between",
 				}}>
 				<Text style={{ fontSize: 16 }}>{formatDate(item.date.toDate())}</Text>
-				<Text style={{ fontSize: 16, paddingRight: 10 }}>{item.montant} €</Text>
+				<Text style={{ fontSize: 16, paddingRight: 10 }}>{item.amount} ₹</Text>
 			</View>
 		</View>
 	);
@@ -54,7 +56,7 @@ const ExpenseCategories = ({ navigation, route }) => {
 			<TouchableOpacity
 				style={[styles.backButton, styles.backButtonRR]}
 				onPress={async () => {
-					await deleteDepense(data.item.id);
+					await deleteExpense(data.item.id);
 				}}>
 				<Ionicons name="trash-outline" color={"#FFF"} size={28} />
 			</TouchableOpacity>
@@ -64,8 +66,8 @@ const ExpenseCategories = ({ navigation, route }) => {
 				onPress={() => {
 					map[data.item.id].closeRow();
 					navigation.navigate("EditExpense", {
-						depense: data.item.id,
-						title: data.item.nom,
+						expense: data.item.id,
+						title: data.item.name,
 					});
 				}}>
 				<Ionicons name="create-outline" color={"#FFF"} size={28} />
@@ -73,27 +75,26 @@ const ExpenseCategories = ({ navigation, route }) => {
 		</View>
 	);
 
-	const deleteDepense = async (id) => {
-		await deleteDoc(doc(db, "users", user.uid, "depenses", id));
+	const deleteExpense = async (id) => {
+		await deleteDoc(doc(db, "users", user.uid, "expenses", id));
 	};
 
 	return (
 		<View style={styles.container}>
-			<View style={styles.depenses}>
-				{depenses && depenses.length === 0 && (
+			<View style={styles.expenses}>
+				{expenses && expenses.length === 0 && (
 					<View style={{ marginTop: 20 }}>
 						<Text style={{ alignSelf: "center" }}>
-							Tu n'as aucune dépense dans cette catégorie. Et si tu en ajoutais
-							une ?
+							You have no expenses in this category. What if you add one?
 						</Text>
 					</View>
 				)}
 
-				{depenses && depenses.length > 0 && (
+				{expenses && expenses.length > 0 && (
 					<SwipeListView
 						useFlatList={true}
-						data={[...depenses].sort((a, b) => a.nom > b.nom)}
-						renderItem={renderDepense}
+						data={[...expenses].sort((a, b) => a.name > b.name)}
+						renderItem={renderExpense}
 						renderHiddenItem={renderSwipeButtons}
 						keyExtractor={(item) => item.id}
 						leftOpenValue={75}
@@ -115,12 +116,12 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 	},
 
-	depenses: {
+	expenses: {
 		flex: 1,
 		alignSelf: "stretch",
 	},
 
-	depense: {
+	expense: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		borderBottomWidth: 1,

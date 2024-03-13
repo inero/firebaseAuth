@@ -9,13 +9,15 @@ import {
 	View,
 } from "react-native";
 import { addDoc, collection, doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useState } from "react";
+
+const auth = firebase.getAuth();
 
 const Registration = ({ navigation }) => {
 	const [users] = useCollectionData(collection(db, "users"));
@@ -31,7 +33,7 @@ const Registration = ({ navigation }) => {
 			const usernames = users.map((user) => user.username);
 			if (usernames.includes(username)) {
 				showMessage({
-					message: "Ce nom d'utilisateur est déjà pris",
+					message: "This username is already taken",
 					type: "danger",
 				});
 				return;
@@ -40,7 +42,7 @@ const Registration = ({ navigation }) => {
 
 		if (username.length === 0) {
 			showMessage({
-				message: "Veuillez entrer un nom d'utilisateur",
+				message: "Please enter a username",
 				type: "danger",
 			});
 			return;
@@ -49,7 +51,7 @@ const Registration = ({ navigation }) => {
 		if (username !== username.trim()) {
 			showMessage({
 				message:
-					"Veuillez ne pas entrer d'espaces pour votre nom d'utilisateur",
+					"Please do not enter spaces for your username",
 				type: "danger",
 			});
 			return;
@@ -57,7 +59,7 @@ const Registration = ({ navigation }) => {
 
 		if (password !== passwordConfirmation) {
 			showMessage({
-				message: "Les mots de passe ne correspondent pas",
+				message: "Passwords do not match",
 				type: "danger",
 			});
 			return;
@@ -67,16 +69,16 @@ const Registration = ({ navigation }) => {
 			.then(async (userCredential) => {
 				const user = userCredential.user;
 
-				// Mise à jour du nom d'utilisateur interne
+				// Updating internal username
 				await updateProfile(user, { displayName: username });
 
-				// Création de l'utilisateur dans Firestore
+				// Creating the user in Firestore
 				await setDoc(doc(db, "users", user.uid), {
 					uid: user.uid,
 					username,
 				});
 
-				// Ajout de catégories par défaut
+				// Adding default categories
 				await addDoc(collection(db, "users", user.uid, "categories"), {
 					nom: "Courses",
 					limite: 200,
@@ -91,7 +93,7 @@ const Registration = ({ navigation }) => {
 						)
 				);
 				await addDoc(collection(db, "users", user.uid, "categories"), {
-					nom: "Divertissement",
+					nom: "Entertainment",
 					limite: 100,
 				}).then(
 					async (docRef) =>
@@ -104,7 +106,7 @@ const Registration = ({ navigation }) => {
 						)
 				);
 				await addDoc(collection(db, "users", user.uid, "categories"), {
-					nom: "Hygiène",
+					nom: "Health",
 					limite: 30,
 				}).then(
 					async (docRef) =>
@@ -168,8 +170,7 @@ const Registration = ({ navigation }) => {
 					</View>
 
 					<Text style={{ paddingLeft: 10 }}>
-						By registering, you accept our{" "}
-						<Text style={styles.link}>Terms of Service</Text>.
+						By registering, you accept our{" "} <Text style={styles.link}>Terms of Service</Text>.
 					</Text>
 
 					<TouchableOpacity

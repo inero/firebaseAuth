@@ -17,7 +17,7 @@ import {
 	query,
 	updateDoc,
 } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -39,61 +39,64 @@ function formatDate(date) {
 	}/${year}`;
 }
 
-const NewExpense = ({ navigation }) => {
-	const user = auth.currentUser;
+const auth = firebase.getAuth();
 
-	const [categorie, setCategorie] = useState("");
-	const [depense, setDepense] = useState("");
-	const [montant, setMontant] = useState("");
+const NewExpense = ({ navigation }) => {
+	const user = auth?.currentUser;
+
+	const [category, setCategory] = useState("");
+	const [expense, setExpense] = useState("");
+	const [amount, setAmount] = useState("");
 
 	const [date, setDate] = useState(new Date());
 	const [show, setShow] = useState(false);
 
-	const usersCollectionRef = collection(db, "users", user.uid, "depenses");
+	const usersCollectionRef = []; //collection(db, "users", user.uid, "expenses");
 
-	const creerDepense = async () => {
+	const createExpense = async () => {
 		if (
 			!(
-				categorie.trim().length > 0 &&
-				depense.trim().length > 0 &&
-				montant.trim().length > 0
+				category.trim().length > 0 &&
+				expense.trim().length > 0 &&
+				amount.trim().length > 0
 			)
 		) {
 			showMessage({
-				message: "Veuillez remplir tous les champs",
+				message: "Please fill all fields",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (isNaN(parseFloat(montant)) || parseFloat(montant) <= 0.0) {
+		if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0.0) {
 			showMessage({
-				message: "Le montant doit être un nombre supérieur à 0",
+				message: "The amount must be a number greater than 0",
 				type: "danger",
 			});
 			return;
 		}
 
 		await addDoc(usersCollectionRef, {
-			nom: depense,
-			montant: parseFloat(montant),
-			categorie: categorie,
+			nom: expense,
+			amount: parseFloat(amount),
+			category,
 			date: Timestamp.fromDate(date),
 		}).then(async (docRef) => {
 			await updateDoc(docRef, { id: docRef.id });
 			showMessage({
-				message: "Depense ajoutée avec succès !",
+				message: "Expense added successfully!",
 				type: "success",
 			});
 		});
 	};
 
-	const [categories, loading, error] = useCollectionData(
-		query(
-			collection(db, "users", user.uid, "categories"),
-			orderBy("nom", "asc")
-		)
-	);
+	const [categories, loading, error] = [];
+	// useCollectionData(
+	// 	query(
+	// 		collection(db, "users", user.uid, "categories"),
+	// 		orderBy("nom", "asc")
+	// 	)
+	// );
 
 	return (
 		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -103,20 +106,20 @@ const NewExpense = ({ navigation }) => {
 				<View style={styles.form}>
 					<View>
 						<View style={{ justifyContent: "center" }}>
-							{categories && categories.every((categorie) => categorie.id) && (
+							{categories && categories.every((category) => category.id) && (
 								<RNPickerSelect
 									style={picker}
 									useNativeAndroidPickerStyle={false}
-									value={categorie}
-									onValueChange={setCategorie}
+									value={category}
+									onValueChange={setCategory}
 									placeholder={{
-										label: "Nom de la catégorie",
+										label: "Category name",
 										value: undefined,
 									}}
-									items={categories?.map((categorie) => ({
-										key: categorie.id,
-										label: categorie.nom,
-										value: categorie.id,
+									items={categories?.map((category) => ({
+										key: category.id,
+										label: category.nom,
+										value: category.id,
 									}))}
 								/>
 							)}
@@ -131,9 +134,9 @@ const NewExpense = ({ navigation }) => {
 					<View style={styles.input}>
 						<TextInput
 							style={{ height: 50 }}
-							placeholder="Nom de la dépense"
-							onChangeText={setDepense}
-							value={depense}
+							placeholder="Expense name"
+							onChangeText={setExpense}
+							value={expense}
 							maxLength={30}
 						/>
 					</View>
@@ -141,9 +144,9 @@ const NewExpense = ({ navigation }) => {
 					<View style={styles.input}>
 						<TextInput
 							style={{ height: 50 }}
-							placeholder="Montant"
-							onChangeText={setMontant}
-							value={montant}
+							placeholder="Amount"
+							onChangeText={setAmount}
+							value={amount}
 							maxLength={5}
 							keyboardType={"numeric"}
 						/>
@@ -173,16 +176,16 @@ const NewExpense = ({ navigation }) => {
 
 					<TouchableOpacity
 						onPress={() => {
-							creerDepense().then(() => {
+							createExpense().then(() => {
 								Keyboard.dismiss();
-								setCategorie("");
-								setDepense("");
-								setMontant("");
+								setCategory("");
+								setExpense("");
+								setAmount("");
 								setDate(new Date());
 							});
 						}}>
 						<View style={styles.button}>
-							<Text style={styles.buttonText}>Ajouter</Text>
+							<Text style={styles.buttonText}>Add</Text>
 						</View>
 					</TouchableOpacity>
 					<StatusBar style="auto" />

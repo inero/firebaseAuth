@@ -5,10 +5,10 @@ import { StatusBar } from "expo-status-bar";
 const Home = ({ navigation }) => {
 	return (
 		<View style={styles.container}>
-			<Image style={styles.logo} source={require("../../assets/icon.png")} />
-			<Text style={styles.motto}>
+			<Image style={styles.logo} source={require("../../assets/exptra-logo.png")} />
+			{/* <Text style={styles.motto}>
 				Manage your expenses quickly and easily.
-			</Text>
+			</Text> */}
 
 			<View style={styles.buttons}>
 				<TouchableOpacity onPress={() => navigation.navigate("Login")}>
@@ -24,7 +24,7 @@ const Home = ({ navigation }) => {
 				</TouchableOpacity>
 			</View>
 
-			<Text style={styles.version}>Version 1.0.0a</Text>
+			<Text style={styles.version}>Version 1.0.0</Text>
 
 			<StatusBar style="auto" />
 		</View>
@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
 		alignSelf: "flex-start",
 		color: "white",
 		fontSize: 30,
+		alignItems: "center",
+		textAlign: "justify",
+		justifyContent: "center",
 		fontWeight: "600",
 		marginLeft: 10,
 	},

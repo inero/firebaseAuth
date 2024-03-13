@@ -20,7 +20,7 @@ import {
 	query,
 	updateDoc,
 } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 import {
 	useCollectionData,
 	useDocumentData,
@@ -50,40 +50,44 @@ Time.propTypes = {
 	children: PropTypes.string.isRequired,
 };
 
+const auth = firebase.getAuth();
+
 const Chatbot = () => {
-	// Pour désactiver le chat à distance
-	const [adminMessages] = useDocumentData(doc(db, "admin", "messages"));
+	// To disable remote chat
+	const [adminMessages] = []; //useDocumentData(doc(db, "admin", "messages"));
 
-	const user = auth.currentUser;
+	const user = auth?.currentUser;
 
-	const [messages, loadingMessages, errorMessages] = useCollectionData(
-		query(collection(db, "messages"), orderBy("timestamp", "asc"))
-	);
+	const [messages, loadingMessages, errorMessages] = [];
+	// useCollectionData(
+	// 	query(collection(db, "messages"), orderBy("timestamp", "asc"))
+	// );
 
-	const [users, loadingUsers, errorUsers] = useCollectionData(
-		collection(db, "users")
-	);
+	const [users, loadingUsers, errorUsers] = [];
+	// useCollectionData(
+	// 	collection(db, "users")
+	// );
 
 	const [inputMessage, setInputMessage] = useState("");
 
 	const getUsername = (uid) => {
 		if (users) {
 			const user = users.find((user) => user.uid === uid);
-			return user ? "@" + user.username : "Utilisateur supprimé";
+			return user ? "@" + user.username : "User deleted";
 		} else {
-			return "Chargement...";
+			return "Loading...";
 		}
 	};
 
 	const renderMessage = ({ item }) => {
-		const options = ["Annuler"];
+		const options = ["Close"];
 
 		const own = item.uid === user.uid;
-		own ? options.unshift("Supprimer") : null;
+		own ? options.unshift("Delete") : null;
 		const destructive = own ? 1 : undefined;
 
 		const liked = item.likes.includes(user.uid);
-		liked ? options.unshift("Retirer like") : options.unshift("Like");
+		liked ? options.unshift("Remove like") : options.unshift("Like");
 		const cancel = liked ? 1 : 2;
 
 		return (
@@ -165,16 +169,17 @@ const Chatbot = () => {
 
 	const addMessage = async (message) => {
 		if (message.trim().length === 0) {
-			showMessage({ message: "Tu dois écrire un message", type: "danger" });
+			showMessage({ message: "You need to write a message", type: "danger" });
 			return;
 		}
 
-		const ref = await addDoc(collection(db, "messages"), {
-			content: message,
-			timestamp: Timestamp.now(),
-			uid: user.uid,
-			likes: [],
-		});
+		const ref = null;
+		// await addDoc(collection(db, "messages"), {
+		// 	content: message,
+		// 	timestamp: Timestamp.now(),
+		// 	uid: user.uid,
+		// 	likes: [],
+		// });
 
 		await updateDoc(ref, {
 			id: ref.id,
@@ -182,21 +187,21 @@ const Chatbot = () => {
 	};
 
 	const deleteMessage = async (id) => {
-		await deleteDoc(doc(db, "messages", id));
+		//await deleteDoc(doc(db, "messages", id));
 	};
 
 	const like = async (id) => {
 		const message = messages.find((message) => message.id === id);
-		await updateDoc(doc(db, "messages", message.id), {
-			likes: [...message.likes, user.uid],
-		});
+		// await updateDoc(doc(db, "messages", message.id), {
+		// 	likes: [...message.likes, user.uid],
+		// });
 	};
 
 	const removeLike = async (id) => {
 		const message = messages.find((message) => message.id === id);
-		await updateDoc(doc(db, "messages", message.id), {
-			likes: message.likes.filter((uid) => uid !== user.uid),
-		});
+		// await updateDoc(doc(db, "messages", message.id), {
+		// 	likes: message.likes.filter((uid) => uid !== user.uid),
+		// });
 	};
 
 	const { showActionSheetWithOptions } = useActionSheet();
@@ -206,7 +211,7 @@ const Chatbot = () => {
 			style={styles.container}
 			behavior={undefined}>
 			<View style={styles.main}>
-				<Text style={styles.title}>Vos conseils</Text>
+				<Text style={styles.title}>Your advice</Text>
 
 				{messages && (
 					<FlatList
@@ -227,7 +232,7 @@ const Chatbot = () => {
 							onChangeText={setInputMessage}
 							value={inputMessage}
 							maxLength={200}
-							placeholder="Partage ton expérience !"
+							placeholder="Share your experience!"
 						/>
 					</View>
 				)}
@@ -239,7 +244,7 @@ const Chatbot = () => {
 							onChangeText={setInputMessage}
 							value={inputMessage}
 							maxLength={200}
-							placeholder="Chat désactivé par l'équipe d'Okane"
+							placeholder="Chat disabled!"
 							editable={false}
 						/>
 					</View>
@@ -253,7 +258,7 @@ const Chatbot = () => {
 						});
 					}}>
 					<View style={styles.button}>
-						<Text style={styles.buttonText}>Envoyer</Text>
+						<Text style={styles.buttonText}>Send</Text>
 					</View>
 				</Pressable>
 			</View>

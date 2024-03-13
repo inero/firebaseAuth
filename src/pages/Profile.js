@@ -9,22 +9,24 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { auth, db, storage } from "../../firebase";
+import { firebase } from "../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { signOut, updateProfile } from "firebase/auth";
 
-// import Dialog from "react-native-dialog";
+import Dialog from "react-native-dialog";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useState } from "react";
 
+const auth = firebase.getAuth();
+
 const Profile = () => {
 	const [modalVisible, setModalVisible] = useState(false);
 
-	const [pseudo, setPseudo] = useState("");
+	const [nickname, setNickname] = useState("");
 	const [photoURL, setPhotoURL] = useState(null);
 
 	const [easterEgg, setEasterEgg] = useState(0);
@@ -33,16 +35,16 @@ const Profile = () => {
 
 	// Utilise le modal d'alerte natif pour iOS
 	if (platform === "ios" && modalVisible) {
-		Alert.prompt("Changer de pseudo", "", [
+		Alert.prompt("Change nickname", "", [
 			{
-				text: "Annuler",
+				text: "Cancel",
 				onPress: () => setModalVisible(false),
 				style: "cancel",
 			},
 			{
-				text: "Confirmer",
-				onPress: async (pseudo) => {
-					await changerPseudo(pseudo);
+				text: "Confirm",
+				onPress: async (nickname) => {
+					await changeNickname(nickname);
 					setModalVisible(!modalVisible);
 				},
 			},
@@ -77,50 +79,55 @@ const Profile = () => {
 		// setPhotoURL(downloadURL);
 	};
 
-	const changerPseudo = async (pseudo) => {
-		if (pseudo.trim().length === 0) {
+	const changeNickname = async (nickname) => {
+		if (nickname.trim().length === 0) {
 			showMessage({
-				message: "Veuillez entrer un pseudo",
+				message: "Please enter a nickname",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (pseudo !== pseudo.trim()) {
+		if (nickname !== nickname.trim()) {
 			showMessage({
 				message:
-					"Veuillez ne pas entrer d'espaces pour votre nom d'utilisateur",
+					"Please do not enter spaces for your username",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (pseudo.length > 20) {
+		if (nickname.length > 20) {
 			showMessage({
-				message: "Votre pseudo ne doit pas dépasser 20 caractères",
+				message: "Your nickname must not exceed 20 characters",
 				type: "danger",
 			});
 			return;
 		}
 
-		// Met à jour le pseudo interne de l'utilisateur
-		await updateProfile(auth?.currentUser, {
-			displayName: pseudo,
+		await auth?.currentUser?.updateProfile({
+			displayName: nickname,
 		});
-		// Met à jour le pseudo dans la base de données
-		await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-			username: pseudo,
-		});
+		// await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
+		// 	username: nickname,
+		// });
 
-		setPseudo(pseudo);
+		setNickname(nickname);
 	};
 
 	if (!photoURL && auth?.currentUser?.photoURL) {
 		setPhotoURL(auth.currentUser.photoURL);
 	}
 
-	const logout = async () => {
-		await signOut(auth);
+	const handleSignOut = async () => {
+		auth
+		  .signOut()
+		  .then(() => {
+			navigation.replace("Home");
+		  })
+		  .catch((error) => {
+			console.log(error);
+		  });
 	};
 
 	const checkEasterEgg = async () => {
@@ -135,7 +142,7 @@ const Profile = () => {
 			setPhotoURL(downloadURL);
 
 			showMessage({
-				message: "Un bon bain est un bon bain d'or !",
+				message: "A good bath is a good golden bath!",
 				type: "warning",
 				duration: 5000,
 			});
@@ -152,7 +159,7 @@ const Profile = () => {
 				onPress={() => {
 					showActionSheetWithOptions(
 						{
-							options: ["Changer de photo de profil", "Annuler"],
+							options: ["Change profile picture", "Close"],
 							cancelButtonIndex: 1,
 						},
 						async (index) => {
@@ -165,7 +172,7 @@ const Profile = () => {
 				<View style={styles.profileImage}>
 					{!photoURL && (
 						<Image
-							source={require("../../assets/icon.png")}
+							source={require("../../assets/exptra-logo.png")}
 							style={styles.image}
 							resizeMode="cover"
 						/>
@@ -188,7 +195,7 @@ const Profile = () => {
 				<TouchableOpacity onPress={() => setModalVisible(true)}>
 					<View style={[styles.menuAction, styles.menuActionBorder]}>
 						<Ionicons name="pencil-outline" style={styles.menuIcon} size={15} />
-						<Text style={styles.menuText}>Changer de pseudo</Text>
+						<Text style={styles.menuText}>Change nickname</Text>
 					</View>
 				</TouchableOpacity>
 
@@ -199,11 +206,11 @@ const Profile = () => {
 							style={styles.menuIcon}
 							size={15}
 						/>
-						<Text style={styles.menuText}>Paramètres</Text>
+						<Text style={styles.menuText}>Settings</Text>
 					</View>
 				</TouchableOpacity>
 
-				<TouchableOpacity onPress={logout}>
+				<TouchableOpacity onPress={handleSignOut}>
 					<View style={styles.menuAction}>
 						<Ionicons
 							name="log-out-outline"
@@ -215,31 +222,31 @@ const Profile = () => {
 				</TouchableOpacity>
 			</View>
 
-			{/* {platform === "android" && (
+			{platform === "android" && (
 				<Dialog.Container
 					visible={modalVisible}
 					onBackdropPress={() => {
 						setModalVisible(false);
 					}}>
-					<Dialog.Title>Changer de pseudo</Dialog.Title>
+					<Dialog.Title>Change nickname</Dialog.Title>
 					<Dialog.Input
-						placeholder="Nouveau pseudo"
-						onChangeText={setPseudo}
+						placeholder="New nickname"
+						onChangeText={setNickname}
 						maxLength={20}
 					/>
 					<Dialog.Button
-						label="Annuler"
+						label="Close"
 						onPress={() => setModalVisible(false)}
 					/>
 					<Dialog.Button
-						label="Confirmer"
+						label="Confirm"
 						onPress={async () => {
-							await changerPseudo(pseudo);
+							await changeNickname(nickname);
 							setModalVisible(!modalVisible);
 						}}
 					/>
 				</Dialog.Container>
-			)} */}
+			)}
 
 			<StatusBar style="auto" />
 		</View>

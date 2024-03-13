@@ -6,7 +6,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 import {
 	collection,
 	deleteDoc,
@@ -18,12 +18,14 @@ import {
 } from "firebase/firestore";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
-// import JaugeDepenses from "../components/JaugeDepenses";
+import GaugeExpenses from "../components/GaugeExpenses";
 import { LineChart } from "react-native-chart-kit";
 import { StatusBar } from "expo-status-bar";
 import { SwipeListView } from "react-native-swipe-list-view";
 // import Swiper from "react-native-swiper";
 import { useCollectionData } from "react-firebase-hooks/firestore";
+
+const auth = firebase.getAuth();
 
 // function that returns date of last day of previous month
 const previousMonth = () => {
@@ -59,60 +61,58 @@ const Expenses = ({ navigation }) => {
 	// 	)
 	// );
 
-	const [depenses] = [];
+	const [expenses] = [];
 	// useCollectionData(
-	// 	query(collection(db, "users", user.uid, "depenses"))
+	// 	query(collection(db, "users", user.uid, "expenses"))
 	// );
 
 	// Jauge circulaire
 
 	const budgetMax = () => {
 		const tmp = categories.reduce(
-			(total, categorie) => total + categorie.limite,
+			(total, category) => total + category.limit,
 			0
 		);
 		return tmp;
 	};
 
-	const depensesTotales = () => {
+	const expensesTotal = () => {
 		const p = previousMonth();
 		const n = nextMonth();
 
-		return depenses
-			.filter((depense) => {
-				const d = depense.date.toDate();
+		return expenses
+			.filter((expense) => {
+				const d = expense.date.toDate();
 				d.setMilliseconds(0);
 
 				return d > p && d < n;
 			})
-			.reduce((total, depense) => total + depense.montant, 0);
+			.reduce((total, expense) => total + expense.amount, 0);
 	};
 
-	const dpt = depenses ? depensesTotales() : 0;
+	const dpt = expenses ? expensesTotal() : 0;
 	const max = categories ? budgetMax() : 0;
-	const pourcentage =
-		depenses && categories && depenses.length > 0
-			? Math.round((depensesTotales() / budgetMax()) * 100)
+	const percentage =
+	expenses && categories && expenses.length > 0
+			? Math.round((expensesTotal() / budgetMax()) * 100)
 			: 0;
 
-	// Graphique
-
 	const mois = [
-		"Janv",
-		"Févr",
-		"Mars",
-		"Avr",
-		"Mai",
-		"Juin",
-		"Juill",
-		"Août",
-		"Sept",
-		"Oct",
-		"Nov",
-		"Déc",
+		"JAN",
+		"FEB",
+		"MAR",
+		"APR",
+		"MAY",
+		"JUN",
+		"JUL",
+		"AUG",
+		"SEP",
+		"OCT",
+		"NOV",
+		"DEC",
 	];
 
-	const calculerSixDerniersMois = () => {
+	const calculateLastSixMonths = () => {
 		const six = [];
 		const d = new Date();
 
@@ -127,24 +127,24 @@ const Expenses = ({ navigation }) => {
 		return six.reverse();
 	};
 
-	const sixDerniersMois = calculerSixDerniersMois();
-	const sixDerniersMoisLabels = sixDerniersMois.map((noMois) => mois[noMois]);
+	const lastSixMonths = calculateLastSixMonths();
+	const lastSixMonthsLabels = lastSixMonths.map((noMonth) => mois[noMonth]);
 
-	const sommeSixDerniersMois = sixDerniersMois.map((noMois) => {
-		if (depenses) {
-			return depenses
-				.filter((depense) => depense?.date.toDate().getMonth() === noMois)
-				.reduce((total, depense) => total + depense?.montant, 0);
+	const sommeLastSixMonths = lastSixMonths.map((noMonth) => {
+		if (expenses) {
+			return expenses
+				.filter((expense) => expense?.date.toDate().getMonth() === noMonth)
+				.reduce((total, expense) => total + expense?.amount, 0);
 		} else {
 			return 0;
 		}
 	});
 
 	const data = {
-		labels: sixDerniersMoisLabels,
+		labels: lastSixMonthsLabels,
 		datasets: [
 			{
-				data: sommeSixDerniersMois,
+				data: sommeLastSixMonths,
 				color: (opacity = 1) => `rgba(75, 161, 68, ${opacity})`,
 				strokeWidth: 2,
 			},
@@ -166,25 +166,23 @@ const Expenses = ({ navigation }) => {
 		},
 	};
 
-	// Liste des catégories
-
-	const renderCategorie = ({ item }) => {
-		const sommeDepensesCategorie = depenses
-			? depenses
-					.filter((depense) => depense.categorie === item.id)
-					.reduce((total, depense) => total + depense.montant, 0)
+	const renderCategory = ({ item }) => {
+		const sommeExpenseCategory = expenses
+			? expenses
+					.filter((expense) => expense.category === item.id)
+					.reduce((total, expense) => total + expense.amount, 0)
 			: 0;
 
-		const taux = sommeDepensesCategorie / item.limite;
+		const taux = sommeExpenseCategory / item.limit;
 
 		return (
 			<TouchableHighlight
-				style={styles.categorie}
+				style={styles.category}
 				underlayColor="#f5f5f5"
 				onPress={() => {
 					navigation.navigate("ExpenseCategories", {
 						categorie: item.id,
-						title: item.nom,
+						title: item.name,
 					});
 				}}>
 				<>
@@ -192,26 +190,26 @@ const Expenses = ({ navigation }) => {
 					<View
 						style={{ flexDirection: "row", fontSize: 16, paddingRight: 10 }}>
 						{taux < 0.7 && (
-							<Text style={{ color: "green" }}>{sommeDepensesCategorie} €</Text>
+							<Text style={{ color: "green" }}>{sommeExpenseCategory} ₹</Text>
 						)}
 
 						{taux >= 0.7 && taux < 0.9 && (
 							<Text style={{ color: "#e67e00" }}>
-								{sommeDepensesCategorie} €
+								{sommeExpenseCategory} ₹
 							</Text>
 						)}
 
 						{taux >= 0.9 && taux < 1 && (
-							<Text style={{ color: "red" }}>{sommeDepensesCategorie} €</Text>
+							<Text style={{ color: "red" }}>{sommeExpenseCategory} ₹</Text>
 						)}
 
 						{taux >= 1.0 && (
 							<Text style={{ color: "#8c1818" }}>
-								{sommeDepensesCategorie} €
+								{sommeExpenseCategory} ₹
 							</Text>
 						)}
 
-						<Text> / {item.limite} €</Text>
+						<Text> / {item.limit} ₹</Text>
 					</View>
 				</>
 			</TouchableHighlight>
@@ -223,7 +221,7 @@ const Expenses = ({ navigation }) => {
 			<TouchableOpacity
 				style={[styles.backButton, styles.backButtonRL]}
 				onPress={() => map[data.item.id].closeRow()}>
-				<Text style={{ color: "white" }}>Fermer</Text>
+				<Text style={{ color: "white" }}>Close</Text>
 			</TouchableOpacity>
 
 			<TouchableOpacity
@@ -239,7 +237,7 @@ const Expenses = ({ navigation }) => {
 				onPress={() => {
 					navigation.navigate("EditCategory", {
 						categorie: data.item.id,
-						title: data.item.nom,
+						title: data.item.name,
 					});
 					map[data.item.id].closeRow();
 				}}>
@@ -272,7 +270,7 @@ const Expenses = ({ navigation }) => {
 					styles.container,
 					{ backgroundColor: "#5BB774" },
 				]}>
-				{/* <JaugeDepenses dpt={dpt} max={max} pourcentage={pourcentage} /> */}
+				<GaugeExpenses dpt={dpt} max={max} percentage={percentage} />
 			</View>
 
 			{/* Graphique */}
@@ -291,8 +289,7 @@ const Expenses = ({ navigation }) => {
 				{categories && categories.length === 0 && (
 					<View style={{ marginTop: 20 }}>
 						<Text style={{ alignSelf: "center" }}>
-							Tu n'as aucune catégorie. Et si tu en ajoutais une avec ta
-							première dépense ? 😉
+							You have no category. What if you added one with your first expense? 😉
 						</Text>
 					</View>
 				)}
@@ -301,7 +298,7 @@ const Expenses = ({ navigation }) => {
 					<SwipeListView
 						useFlatList={true}
 						data={categories}
-						renderItem={renderCategorie}
+						renderItem={renderCategory}
 						renderHiddenItem={renderSwipeButtons}
 						keyExtractor={(item) => item.id}
 						leftOpenValue={75}
@@ -311,13 +308,13 @@ const Expenses = ({ navigation }) => {
 
 				{loadingCategories && (
 					<View style={styles.container}>
-						<Text>Chargement de vos catégories...</Text>
+						<Text>Loading your categories...</Text>
 					</View>
 				)}
 
 				{errorCategories && (
 					<View style={styles.container}>
-						<Text>Erreur : {JSON.stringify(error)}</Text>
+						<Text>Error : {JSON.stringify(error)}</Text>
 					</View>
 				)}
 			</View>

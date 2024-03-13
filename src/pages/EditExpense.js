@@ -17,7 +17,7 @@ import {
 	query,
 	updateDoc,
 } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -27,6 +27,8 @@ import { showMessage } from "react-native-flash-message";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { useState } from "react";
+
+const auth = firebase.getAuth();
 
 const grayPlaceholder = Platform.OS === "ios" ? "#bebec0" : "#a3a3a3";
 
@@ -41,39 +43,39 @@ function formatDate(date) {
 }
 
 const EditExpense = ({ navigation, route }) => {
-	const user = auth.currentUser;
+	const user = auth?.currentUser;
 
-	const idDepense = route.params.depense;
+	const idExpense = route.params.expense;
 
 	const [dp] = useDocumentData(
-		doc(db, "users", user.uid, "depenses", idDepense)
+		doc(db, "users", user.uid, "expenses", idExpense)
 	);
 
-	const [categorie, setCategorie] = useState("");
-	const [depense, setDepense] = useState("");
-	const [montant, setMontant] = useState("");
+	const [category, setCategory] = useState("");
+	const [expense, setExpense] = useState("");
+	const [amount, setAmount] = useState("");
 
 	const [date, setDate] = useState(new Date());
 	const [show, setShow] = useState(false);
 
-	const [categorieOnce, setCategorieOnce] = useState(false);
-	const [depenseOnce, setDepenseOnce] = useState(false);
-	const [montantOnce, setMontantOnce] = useState(false);
+	const [categoryOnce, setCategoryOnce] = useState(false);
+	const [expenseOnce, setExpenseOnce] = useState(false);
+	const [amountOnce, setAmountOnce] = useState(false);
 	const [dateOnce, setDateOnce] = useState(false);
 
-	if (dp && !categorieOnce) {
-		setCategorie(dp.categorie);
-		setCategorieOnce(true);
+	if (dp && !categoryOnce) {
+		setCategory(dp.category);
+		setCategoryOnce(true);
 	}
 
-	if (dp && !depenseOnce) {
-		setDepense(dp.nom.toString());
-		setDepenseOnce(true);
+	if (dp && !expenseOnce) {
+		setExpense(dp.nom.toString());
+		setExpenseOnce(true);
 	}
 
-	if (dp && !montantOnce) {
-		setMontant(dp.montant.toString());
-		setMontantOnce(true);
+	if (dp && !amountOnce) {
+		setAmount(dp.amount.toString());
+		setAmountOnce(true);
 	}
 
 	if (dp && !dateOnce) {
@@ -81,33 +83,33 @@ const EditExpense = ({ navigation, route }) => {
 		setDateOnce(true);
 	}
 
-	const modifierDepense = async () => {
+	const modifierExpense = async () => {
 		if (
 			!(
-				categorie.trim().length > 0 &&
-				depense.trim().length > 0 &&
-				montant.trim().length > 0
+				category.trim().length > 0 &&
+				expense.trim().length > 0 &&
+				amount.trim().length > 0
 			)
 		) {
 			showMessage({
-				message: "Veuillez remplir tous les champs",
+				message: "Please complete all fields",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (isNaN(parseFloat(montant)) || parseFloat(montant) <= 0.0) {
+		if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0.0) {
 			showMessage({
-				message: "Le montant doit être un nombre supérieur à 0",
+				message: "The amount must be a number greater than 0",
 				type: "danger",
 			});
 			return;
 		}
 
-		await updateDoc(doc(db, "users", user.uid, "depenses", idDepense), {
-			nom: depense,
-			montant: parseFloat(montant),
-			categorie: categorie,
+		await updateDoc(doc(db, "users", user.uid, "expenses", idExpense), {
+			nom: expense,
+			amount: parseFloat(amount),
+			category: category,
 			date: Timestamp.fromDate(date),
 		});
 
@@ -130,20 +132,20 @@ const EditExpense = ({ navigation, route }) => {
 				<View style={styles.form}>
 					<View>
 						<View style={{ justifyContent: "center" }}>
-							{categories && categories.every((categorie) => categorie.id) && (
+							{categories && categories.every((category) => category.id) && (
 								<RNPickerSelect
 									style={picker}
 									useNativeAndroidPickerStyle={false}
-									value={categorie}
-									onValueChange={setCategorie}
+									value={category}
+									onValueChange={setCategory}
 									placeholder={{
 										label: "Nom de la catégorie",
 										value: undefined,
 									}}
-									items={categories?.map((categorie) => ({
-										key: categorie.id,
-										label: categorie.nom,
-										value: categorie.id,
+									items={categories?.map((category) => ({
+										key: category.id,
+										label: category.nom,
+										value: category.id,
 									}))}
 								/>
 							)}
@@ -158,9 +160,9 @@ const EditExpense = ({ navigation, route }) => {
 					<View style={styles.input}>
 						<TextInput
 							style={{ height: 50 }}
-							placeholder="Nom de la dépense"
-							onChangeText={setDepense}
-							value={depense}
+							placeholder="Expense name"
+							onChangeText={setExpense}
+							value={expense}
 							maxLength={30}
 						/>
 					</View>
@@ -168,9 +170,9 @@ const EditExpense = ({ navigation, route }) => {
 					<View style={styles.input}>
 						<TextInput
 							style={{ height: 50 }}
-							placeholder="Montant"
-							onChangeText={setMontant}
-							value={montant}
+							placeholder="Amount"
+							onChangeText={setAmount}
+							value={amount}
 							maxLength={5}
 							keyboardType={"numeric"}
 						/>
@@ -200,11 +202,11 @@ const EditExpense = ({ navigation, route }) => {
 
 					<TouchableOpacity
 						onPress={() => {
-							modifierDepense().then(() => {
+							modifierExpense().then(() => {
 								Keyboard.dismiss();
-								setCategorie("");
-								setDepense("");
-								setMontant("");
+								setCategory("");
+								setExpense("");
+								setAmount("");
 							});
 						}}>
 						<View style={styles.button}>

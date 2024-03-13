@@ -5,59 +5,61 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { auth, db } from "../../firebase";
+import { firebase } from "../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 
 import { showMessage } from "react-native-flash-message";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { useState } from "react";
 
+const auth = firebase.getAuth();
+
 const EditCategory = ({ navigation, route }) => {
-	const user = auth.currentUser;
+	const user = auth?.currentUser;
 
-	const idCategorie = route.params.categorie;
+	const idCategory = route.params.category;
 
-	const [categorie] = [];
+	const [category] = [];
 	// useDocumentData(
-	// 	doc(db, "users", user.uid, "categories", idCategorie)
+	// 	doc(db, "users", user.uid, "categories", idCategory)
 	// );
 
-	const [nom, setNom] = useState("");
-	const [limite, setLimite] = useState("");
+	const [name, setName] = useState("");
+	const [limit, setLimit] = useState("");
 
-	const [nomOnce, setNomOnce] = useState(false);
-	const [limiteOnce, setLimiteOnce] = useState(false);
+	const [nameOnce, setNameOnce] = useState(false);
+	const [limitOnce, setLimitOnce] = useState(false);
 
-	if (categorie && !nomOnce) {
-		setNom(categorie.nom);
-		setNomOnce(true);
+	if (category && !nameOnce) {
+		setName(category.name);
+		setNameOnce(true);
 	}
 
-	if (categorie && !limiteOnce) {
-		setLimite(categorie.limite.toString());
-		setLimiteOnce(true);
+	if (category && !limitOnce) {
+		setLimit(category.limit.toString());
+		setLimitOnce(true);
 	}
 
-	const modifierCategorie = async () => {
-		if (!(nom.trim().length > 0 && limite.trim().length > 0)) {
+	const modifierCategory = async () => {
+		if (!(name.trim().length > 0 && limit.trim().length > 0)) {
 			showMessage({
-				message: "Veuillez remplir tous les champs",
+				message: "Please complete all fields",
 				type: "danger",
 			});
 			return;
 		}
 
-		if (isNaN(parseFloat(limite)) || parseFloat(limite) <= 0.0) {
+		if (isNaN(parseFloat(limit)) || parseFloat(limit) <= 0.0) {
 			showMessage({
-				message: "La limite doit être un nombre supérieur à 0",
+				message: "Limit must be a number greater than 0",
 				type: "danger",
 			});
 			return;
 		}
 
-		await updateDoc(doc(db, "users", user.uid, "categories", idCategorie), {
-			nom: nom,
-			limite: parseFloat(limite),
+		await updateDoc(doc(db, "users", user.uid, "categories", idCategory), {
+			name: name,
+			limit: parseFloat(limit),
 		});
 
 		navigation.goBack();
@@ -65,28 +67,28 @@ const EditCategory = ({ navigation, route }) => {
 
 	return (
 		<View style={styles.container}>
-			{categorie && (
+			{category && (
 				<View style={styles.form}>
 					<TextInput
 						style={styles.input}
-						placeholder="Nom de la catégorie"
-						value={nom}
-						onChangeText={setNom}
+						placeholder="Category name"
+						value={name}
+						onChangeText={setName}
 						maxLength={30}
 					/>
 
 					<TextInput
 						style={styles.input}
-						placeholder="Budget"
-						value={limite}
-						onChangeText={setLimite}
+						placeholder="Limit"
+						value={limit}
+						onChangeText={setLimit}
 						keyboardType={"numeric"}
 						maxLength={6}
 					/>
 
 					<TouchableOpacity
 						onPress={async () => {
-							await modifierCategorie(nom, limite);
+							await modifierCategory(name, limit);
 						}}>
 						<View style={styles.button}>
 							<Text style={styles.buttonText}>Edit</Text>
