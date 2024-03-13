@@ -20,7 +20,7 @@ import { useState } from "react";
 const auth = firebase.getAuth();
 
 const Registration = ({ navigation }) => {
-	const [users] = useCollectionData(collection(db, "users"));
+	const [users] = []; //useCollectionData(collection(db, "users"));
 
 	const [username, setUsername] = useState("");
 	const [email, setEmail] = useState("");
@@ -80,8 +80,8 @@ const Registration = ({ navigation }) => {
 
 				// Adding default categories
 				await addDoc(collection(db, "users", user.uid, "categories"), {
-					nom: "Courses",
-					limite: 200,
+					name: "Courses",
+					limit: 200,
 				}).then(
 					async (docRef) =>
 						await setDoc(
@@ -93,8 +93,8 @@ const Registration = ({ navigation }) => {
 						)
 				);
 				await addDoc(collection(db, "users", user.uid, "categories"), {
-					nom: "Entertainment",
-					limite: 100,
+					name: "Entertainment",
+					limit: 100,
 				}).then(
 					async (docRef) =>
 						await setDoc(
@@ -106,8 +106,8 @@ const Registration = ({ navigation }) => {
 						)
 				);
 				await addDoc(collection(db, "users", user.uid, "categories"), {
-					nom: "Health",
-					limite: 30,
+					name: "Health",
+					limit: 30,
 				}).then(
 					async (docRef) =>
 						await setDoc(

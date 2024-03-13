@@ -9,6 +9,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firebase } from "../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
@@ -19,7 +20,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const auth = firebase.getAuth();
 
@@ -29,27 +30,24 @@ const Profile = () => {
 	const [nickname, setNickname] = useState("");
 	const [photoURL, setPhotoURL] = useState(null);
 
-	const [easterEgg, setEasterEgg] = useState(0);
+	// const [easterEgg, setEasterEgg] = useState(0);
+
+	const [budgetModalVisible, setBudgetModalVisible] = useState(false);
+	const [budget, setBudget] = useState(0);
 
 	const platform = Platform.OS;
 
-	// Utilise le modal d'alerte natif pour iOS
-	if (platform === "ios" && modalVisible) {
-		Alert.prompt("Change nickname", "", [
-			{
-				text: "Cancel",
-				onPress: () => setModalVisible(false),
-				style: "cancel",
-			},
-			{
-				text: "Confirm",
-				onPress: async (nickname) => {
-					await changeNickname(nickname);
-					setModalVisible(!modalVisible);
-				},
-			},
-		]);
-	}
+	useEffect(() => {
+		readData();
+	}, []);
+
+	const readData = async () => {
+		const value = await AsyncStorage.getItem('@budget');
+	
+		if (value !== null) {
+			setBudget(value);
+		}
+	};
 
 	const changerPhoto = async () => {
 		// const result = await ImagePicker.launchImageLibraryAsync({
@@ -120,6 +118,7 @@ const Profile = () => {
 	}
 
 	const handleSignOut = async () => {
+		await AsyncStorage.clear();
 		auth
 		  .signOut()
 		  .then(() => {
@@ -130,26 +129,24 @@ const Profile = () => {
 		  });
 	};
 
-	const checkEasterEgg = async () => {
-		setEasterEgg(easterEgg + 1);
-		if (easterEgg === 4) {
-			const downloadURL = await getDownloadURL(
-				ref(storage, `images/profile/easterEgg.png`)
-			);
-			await updateProfile(auth?.currentUser, {
-				photoURL: downloadURL,
-			});
-			setPhotoURL(downloadURL);
-
-			showMessage({
-				message: "A good bath is a good golden bath!",
-				type: "warning",
-				duration: 5000,
-			});
-
-			setEasterEgg(0);
-		}
-	};
+	// const checkEasterEgg = async () => {
+	// 	setEasterEgg(easterEgg + 1);
+	// 	if (easterEgg === 4) {
+	// 		const downloadURL = await getDownloadURL(
+	// 			ref(storage, `images/profile/easterEgg.png`)
+	// 		);
+	// 		await updateProfile(auth?.currentUser, {
+	// 			photoURL: downloadURL,
+	// 		});
+	// 		setPhotoURL(downloadURL);
+	// 		showMessage({
+	// 			message: "A good bath is a good golden bath!",
+	// 			type: "warning",
+	// 			duration: 5000,
+	// 		});
+	// 		setEasterEgg(0);
+	// 	}
+	// };
 
 	const { showActionSheetWithOptions } = useActionSheet(); // Menu changer photo
 
@@ -188,7 +185,7 @@ const Profile = () => {
 			</TouchableOpacity>
 
 			<View>
-				<Text style={styles.username}>@{auth?.currentUser?.displayName}</Text>
+				<Text style={styles.username}>Hello, {auth?.currentUser?.displayName}</Text>
 			</View>
 
 			<View style={styles.menu}>
@@ -199,14 +196,14 @@ const Profile = () => {
 					</View>
 				</TouchableOpacity>
 
-				<TouchableOpacity onPress={() => checkEasterEgg()}>
+				<TouchableOpacity onPress={() => setBudgetModalVisible(true)}>
 					<View style={[styles.menuAction, styles.menuActionBorder]}>
 						<Ionicons
 							name="settings-outline"
 							style={styles.menuIcon}
 							size={15}
 						/>
-						<Text style={styles.menuText}>Settings</Text>
+						<Text style={styles.menuText}>Change budget</Text>
 					</View>
 				</TouchableOpacity>
 
@@ -248,6 +245,33 @@ const Profile = () => {
 				</Dialog.Container>
 			)}
 
+			{budgetModalVisible && (<Dialog.Container
+				visible={budgetModalVisible}
+				onBackdropPress={() => {
+					setBudgetModalVisible(false);
+				}}>
+				<Dialog.Title>Set Budget</Dialog.Title>
+				<Dialog.Input
+					value={budget}
+					placeholder="Budget"
+					onChangeText={setBudget}
+					maxLength={20}
+					keyboardType={"numeric"}
+				/>
+				<Dialog.Button
+					label="Close"
+					onPress={() => setBudgetModalVisible(false)}
+				/>
+				<Dialog.Button
+					label="Confirm"
+					onPress={async () => {
+						await AsyncStorage.setItem('@budget',budget);
+						setBudget(budget);
+						setBudgetModalVisible(!budgetModalVisible);
+					}}
+				/>
+			</Dialog.Container>)}
+
 			<StatusBar style="auto" />
 		</View>
 	);
@@ -264,7 +288,7 @@ const styles = StyleSheet.create({
 	username: {
 		marginTop: 10,
 		color: "white",
-		fontSize: 36,
+		fontSize: 26,
 		fontWeight: "300",
 	},
 
@@ -277,7 +301,7 @@ const styles = StyleSheet.create({
 	profileImage: {
 		width: 250,
 		height: 250,
-		borderRadius: 250,
+		// borderRadius: 250,
 		overflow: "hidden",
 	},
 

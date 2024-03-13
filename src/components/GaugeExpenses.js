@@ -1,12 +1,13 @@
-import CircularProgress from "react-native-circular-progress-indicator";
+import CircularProgress, { ProgressRef } from "react-native-circular-progress-indicator";
 
 const GaugeExpenses = ({ dpt, max, percentage }) => {
+
 	return (
 		<>
 			{dpt <= max && (
 				<CircularProgress
 					value={dpt}
-					valueSuffix={`.${(dpt - Math.floor(dpt)).toFixed(2).split(".")[1]} ₹`}
+					valueSuffix={` ₹`}
 					radius={125}
 					duration={2000}
 					textColor={"#ecf0f1"}
@@ -21,12 +22,12 @@ const GaugeExpenses = ({ dpt, max, percentage }) => {
 			{dpt > max && (
 				<CircularProgress
 					value={dpt}
-					valueSuffix={`,${(dpt - Math.floor(dpt)).toFixed(2).split(".")[1]} ₹`}
+					valueSuffix={` ₹`}
 					radius={120}
 					duration={2000}
 					textColor={"#ecf0f1"}
 					maxValue={dpt}
-					title={`${percentage}% expenses`}
+					title={`Total expenses`}
 					titleColor={"white"}
 					titleStyle={{ fontSize: 16, fontWeight: "400" }}
 					textStyle={{ fontSize: 40, fontWeight: "500" }}

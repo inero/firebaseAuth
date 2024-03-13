@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		marginBottom: 5,
+		marginBottom: 15,
 	},
 
 	input: {
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
 		padding: 10,
 		backgroundColor: "white",
 		borderRadius: 7,
-		marginLeft: 25,
+		marginLeft: 15,
 	},
 
 	button: {
@@ -357,12 +357,16 @@ const styles = StyleSheet.create({
 		backgroundColor: "white",
 		justifyContent: "center",
 		alignItems: "center",
-		marginLeft: 10,
-		marginRight: 25,
+		marginLeft: 5,
+		marginRight: 15,
 	},
 
 	buttonText: {
 		fontWeight: "500",
+	},
+
+	chatbox: {
+		marginBottom: 70,
 	},
 });
 
