@@ -8,20 +8,15 @@ import {
 	TouchableWithoutFeedback,
 	View,
 } from "react-native";
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
 import { firebase } from "../../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
-import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useState } from "react";
 
 const auth = firebase.getAuth();
 
 const Registration = ({ navigation }) => {
-	const [users] = []; //useCollectionData(collection(db, "users"));
-
 	const [username, setUsername] = useState("");
 	const [email, setEmail] = useState("");
 
@@ -29,17 +24,6 @@ const Registration = ({ navigation }) => {
 	const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
 	const register = async () => {
-		if (users) {
-			const usernames = users.map((user) => user.username);
-			if (usernames.includes(username)) {
-				showMessage({
-					message: "This username is already taken",
-					type: "danger",
-				});
-				return;
-			}
-		}
-
 		if (username.length === 0) {
 			showMessage({
 				message: "Please enter a username",
@@ -50,8 +34,7 @@ const Registration = ({ navigation }) => {
 
 		if (username !== username.trim()) {
 			showMessage({
-				message:
-					"Please do not enter spaces for your username",
+				message: "Please do not enter spaces for your username",
 				type: "danger",
 			});
 			return;
@@ -68,58 +51,12 @@ const Registration = ({ navigation }) => {
 		createUserWithEmailAndPassword(auth, email, password)
 			.then(async (userCredential) => {
 				const user = userCredential.user;
-
-				// Updating internal username
 				await updateProfile(user, { displayName: username });
-
-				// Creating the user in Firestore
-				await setDoc(doc(db, "users", user.uid), {
-					uid: user.uid,
-					username,
-				});
-
-				// Adding default categories
-				await addDoc(collection(db, "users", user.uid, "categories"), {
-					name: "Courses",
-					limit: 200,
-				}).then(
-					async (docRef) =>
-						await setDoc(
-							docRef,
-							{
-								id: docRef.id,
-							},
-							{ merge: true }
-						)
-				);
-				await addDoc(collection(db, "users", user.uid, "categories"), {
-					name: "Entertainment",
-					limit: 100,
-				}).then(
-					async (docRef) =>
-						await setDoc(
-							docRef,
-							{
-								id: docRef.id,
-							},
-							{ merge: true }
-						)
-				);
-				await addDoc(collection(db, "users", user.uid, "categories"), {
-					name: "Health",
-					limit: 30,
-				}).then(
-					async (docRef) =>
-						await setDoc(
-							docRef,
-							{
-								id: docRef.id,
-							},
-							{ merge: true }
-						)
-				);
+				navigation.navigate('AuthenticatedTab', { screen: 'Dashboard'});
 			})
-			.catch((e) => showMessage({ message: e.message, type: "danger" }));
+			.catch((e) => {
+				showMessage({ message: e.message, type: "danger" });
+			});
 	};
 
 	return (

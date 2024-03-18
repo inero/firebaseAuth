@@ -5,45 +5,34 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { addDoc, collection, updateDoc } from "firebase/firestore";
 import { firebase } from "../../firebase";
-
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
+import { addCategory } from "../redux/actions";
+import { useSelector, useDispatch } from 'react-redux';
 
-const auth = firebase.getAuth();
 
 const NewCategory = ({ navigation }) => {
-	const user = auth.currentUser;
+	const categories = useSelector((state) => state.categories);
+	const dispatch = useDispatch();
 
 	const [name, setName] = useState("");
-	const [limit, setLimit] = useState("");
 
-	const usersCollectionRef = []; //collection(db, "users", user?.uid, "categories");
-
-	const createCategory = async () => {
-		if (!(name.trim().length > 0 && limit.trim().length > 0)) {
+	const createCategory = async (catName) => {
+		if (!(catName.trim().length > 0)) {
 			showMessage({
 				message: "Please complete all fields",
 				type: "danger",
 			});
 			return;
 		}
-
-		if (isNaN(parseFloat(limit)) || parseFloat(limit) <= 0.0) {
-			showMessage({
-				message: "Limit must be a number greater than 0",
-				type: "danger",
-			});
-			return;
-		}
-
-		const docRef = await addDoc(usersCollectionRef, {
-			name,
-			limit: parseFloat(limit),
-		});
-
-		await updateDoc(docRef, { id: docRef.id });
+		dispatch(
+			addCategory({
+				id: categories.length ? categories.length + 1 : 1,
+				name: catName
+			})
+		);
+		setName("");
 		navigation.goBack();
 	};
 
@@ -57,18 +46,8 @@ const NewCategory = ({ navigation }) => {
 					maxLength={30}
 				/>
 
-				<TextInput
-					style={styles.input}
-					placeholder="Limit"
-					onChangeText={setLimit}
-					keyboardType={"numeric"}
-					maxLength={6}
-				/>
-
 				<TouchableOpacity
-					onPress={async () => {
-						await createCategory(name, limit);
-					}}>
+					onPress={() =>createCategory(name)}>
 					<View style={styles.button}>
 						<Text style={styles.buttonText}>Add</Text>
 					</View>

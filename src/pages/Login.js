@@ -30,9 +30,6 @@ const Login = ({ navigation }) => {
 	}, []);
 
 	const login = (email, password) => {
-		// await signInWithEmailAndPassword(auth, email, password).catch((e) =>
-		// 	showMessage({ message: e.message, type: "danger" })
-		// );
 		const auth = firebase.getAuth();
 		firebase.signInWithEmailAndPassword(auth, email, password)
 			.then((userCredential) => {
@@ -44,7 +41,7 @@ const Login = ({ navigation }) => {
 	};
 
 	return (
-		<TouchableWithoutFeedback onPress={null}>
+		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>

@@ -9,7 +9,7 @@ const GaugeExpenses = ({ dpt, max, percentage }) => {
 					value={dpt}
 					valueSuffix={` ₹`}
 					radius={125}
-					duration={2000}
+					duration={1000}
 					textColor={"#ecf0f1"}
 					maxValue={max}
 					title={`${percentage}% spent this month`}
@@ -24,7 +24,7 @@ const GaugeExpenses = ({ dpt, max, percentage }) => {
 					value={dpt}
 					valueSuffix={` ₹`}
 					radius={120}
-					duration={2000}
+					duration={1000}
 					textColor={"#ecf0f1"}
 					maxValue={dpt}
 					title={`Total expenses`}

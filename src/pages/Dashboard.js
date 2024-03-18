@@ -1,19 +1,14 @@
 import { FlatList, StyleSheet, Text, View, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-	Timestamp,
-	collection,
-	limit,
-	orderBy,
-	query,
-} from "firebase/firestore";
 import { firebase } from "../../firebase";
-
 import GaugeExpenses from "../components/GaugeExpenses";
 import { StatusBar } from "expo-status-bar";
-import { useCollectionData } from "react-firebase-hooks/firestore";
 import Dialog from "react-native-dialog";
 import { useState, useEffect, useCallback } from "react";
+import { useSelector } from 'react-redux';
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { updateProfile } from "firebase/auth";
+
 
 // function that returns date of last day of previous month
 const previousMonth = () => {
@@ -42,114 +37,102 @@ const auth = firebase.getAuth();
 
 const Dashboard = () => {
 	const [refreshing, setRefreshing] = useState(false);
-
 	const [modalVisible, setModalVisible] = useState(false);
 	const [budget, setBudget] = useState(0);
 
+	const expenses = useSelector((state) => state.expenses);
+	const categories = useSelector((state) => state.categories);
+	const limit = useSelector((state) => state.budget);
+
 	useEffect(() => {
-		readData();
+		loadDashboardData();
 	}, []);
+
+	const loadDashboardData = () => {
+		readBudget();
+	}
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true);
-		readData();
+		loadDashboardData();
 		setTimeout(() => {
-		  setRefreshing(false);
+			setRefreshing(false);
 		}, 1000);
 	}, []);
 
-	const readData = async () => {
-		const value = await AsyncStorage.getItem('@budget');
-	
+
+	const writeBudget = async (value) => {
+		await AsyncStorage.setItem(
+			'@budget',
+			budget,
+		);
+
 		if (value !== null) {
-			setBudget(value);
+			updateProfile(auth.currentUser, {
+				photoURL: value
+			}).then(() => {
+				setBudget(value);
+			}).catch((error) => {
+				showMessage({
+					message: "Something went wrong! try again later..",
+					type: "danger",
+				});
+			});
 		}
 	};
 
+	const readBudget = async () => {
+		// const value = await AsyncStorage.getItem('@budget');
+
+		// if (value !== null) {
+		setBudget(auth?.currentUser?.photoURL);
+		// }
+	};
+
 	const user = auth?.currentUser;
-
-	// Circular progress bar
-
-	// const [categories] = []; 
-	// useCollectionData(
-	// 	query(collection(db, "users", user.uid, "categories"))
-	// );
-
-	// const [expenses, loadingExpenses, errorExpenses] = [{ 
-		
-	// }];
-	// useCollectionData(
-	// 	query(collection(db, "users", user.uid, "expenses"))
-	// );
-
-	const expenses = [{
-		id: 1,
-		name: 'Medical',
-		date: '10/10/2024',
-		amount: '5000',
-		category: 1
-	}, {
-		id: 2,
-		name: 'Food',
-		date: '10/10/2024',
-		amount: '2400',
-		category: 2
-	}];
-
-	const categories = [{
-		id: 1,
-		name: 'Health',
-		limit: '2000'
-	},{
-		id: 2,
-		name: 'Shopping',
-		limit: '100'
-	}]; 
-
-	// const budgetMax = () => {
-	// 	return categories.reduce((total, category) => parseInt(total) + parseInt(category.limit), 0);
-	// };
 
 	const expensesTotal = () => {
 		const p = previousMonth();
 		const n = nextMonth();
 
 		return expenses.filter((expense) => {
-				const d = expense.date ? new Date() : new Date();
-				d.setMilliseconds(0);
+			const d = expense.date ? new Date() : new Date();
+			d.setMilliseconds(0);
 
-				return d > p && d < n;
-			})
+			return d > p && d < n;
+		})
 			.reduce((total, expense) => parseInt(total) + parseInt(expense.amount), 0);
 	};
 
 	const exp = expenses ? expensesTotal() : 0;
-	const max = budget; //categories ? budgetMax() : 0;
-	const percentage = expenses && categories && expenses.length > 0
-			? Math.round((expensesTotal() / budget) * 100)
-			: 0;
+	const max = budget;
+	const percentage = expenses && expenses.length > 0
+		? Math.round((expensesTotal() / budget) * 100)
+		: 0;
 
 	const [latestExpenses, loading, error] = [[...expenses], loading, error];
 
-	// useCollectionData(
-	// 	query(
-	// 		collection(db, "users", user.uid, "expenses"),
-	// 		orderBy("date", "desc"),
-	// 		limit(5)
-	// 	)
-	// );
 
-	const renderExpense = ({ item }) => (
-		<View style={styles.expense}>
-			<Text style={{ fontSize: 16 }}>{item.name}</Text>
-			<Text style={{ fontSize: 16 }}>{item.amount} ₹</Text>
-		</View>
-	);
+	const renderExpense = ({ item }) => {
+		const catName = categories.find((cat)=>{
+			if(cat.id === item.category) return cat;
+		})
+		return (
+			<View style={styles.item}>
+				<Ionicons name={catName?.icon} style={styles.icon} size={35} />
+				<View style={styles.details}>
+					<Text style={styles.name}>{item.name}</Text>
+					<Text style={styles.description}>{item.date}</Text>
+				</View>
+				<Text style={styles.amount}>{item.amount}</Text>
+			</View>
+		)
+	};
 
 	return (
 		<ScrollView contentContainerStyle={styles.container} refreshControl={
 			<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-		  }>
+		}>
 			<View
 				style={[
 					styles.semi,
@@ -159,8 +142,8 @@ const Dashboard = () => {
 						backgroundColor: "#2a3e48",
 					},
 				]}>
-				<GaugeExpenses dpt={exp} max={max} percentage={percentage} />
-				{exp > max &&
+				{!refreshing && (<GaugeExpenses dpt={exp} max={max} percentage={percentage} />)}
+				{(exp > max) &&
 					(<TouchableOpacity onPress={() => setModalVisible(true)}>
 						<View style={styles.budgetContainer}>
 							<Text style={styles.setBudget}>Set budget</Text>
@@ -186,12 +169,9 @@ const Dashboard = () => {
 					/>
 					<Dialog.Button
 						label="Confirm"
-						onPress={async () => {
-							await AsyncStorage.setItem(
-								'@budget',
-								budget,
-								);
-							setModalVisible(!modalVisible);
+						onPress={() => {
+							writeBudget(budget);
+							setModalVisible(!modalVisible)
 						}}
 					/>
 				</Dialog.Container>
@@ -205,6 +185,7 @@ const Dashboard = () => {
 						<FlatList
 							style={styles.listExpenses}
 							data={latestExpenses}
+							scrollEnabled={false} 
 							renderItem={renderExpense}
 							keyExtractor={(_item, index) => index}
 							ListEmptyComponent={() => (
@@ -258,7 +239,7 @@ const styles = StyleSheet.create({
 		padding: 5,
 	},
 
-	setBudget:{
+	setBudget: {
 		fontSize: 15,
 		color: '#E8E8E8',
 		fontWeight: "400",
@@ -282,6 +263,35 @@ const styles = StyleSheet.create({
 		borderBottomColor: "#E8E8E8",
 		paddingTop: 16,
 		paddingBottom: 16,
+	},
+
+	item: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		padding: 6,
+		borderBottomWidth: 1,
+		borderBottomColor: '#cccccc',
+	},
+	icon: {
+		fontSize: 35,
+		marginRight: 16,
+		color: 'red',
+	},
+	details: {
+		flex: 1,
+	},
+	name: {
+		fontSize: 16,
+		fontWeight: '500',
+	},
+	description: {
+		fontSize: 14,
+		color: '#999999',
+	},
+	amount: {
+		fontSize: 18,
+		fontWeight: 'bold',
+		marginLeft: 16,
 	},
 });
 

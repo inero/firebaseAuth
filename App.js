@@ -5,14 +5,17 @@ import Routes from "./src/routes/Routes";
 import { firebase } from "./firebase";
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from 'react-native';
+import { Provider } from 'react-redux';
+import { store } from './src/redux/store';
+import { loadCategories, loadExpenses } from "./src/redux/actions";
+import { useDispatch } from 'react-redux';
 
-
-export default function App() {
+const App = () => {
   const auth = firebase.getAuth();
 
   const [currentUser, setCurrentUser] = useState(auth?.currentUser);
   const [initializing, setInitializing] = useState(true);
-
+  const dispatch = useDispatch();
 
   const onAuthStateChangedHandler = (user) => {
     setCurrentUser(user);
@@ -21,11 +24,12 @@ export default function App() {
     }
   };
 
-	useEffect(() => {
-		const unsubscribe = auth.onAuthStateChanged(onAuthStateChangedHandler);
-
-		return unsubscribe;
-	}, []);
+  useEffect(() => {
+    dispatch(loadExpenses());
+    dispatch(loadCategories());
+    const unsubscribe = auth.onAuthStateChanged(onAuthStateChangedHandler);
+    return unsubscribe;
+  }, []);
 
   if (initializing) {
     return (
@@ -37,11 +41,11 @@ export default function App() {
 
   return (
     <ActionSheetProvider>
-			<>
-				<Routes user={currentUser} />
-				<FlashMessage position="top" />
-			</>
-		</ActionSheetProvider>
+      <>
+        <Routes user={currentUser} />
+        <FlashMessage position="top" />
+      </>
+    </ActionSheetProvider>
   );
 }
 
@@ -53,3 +57,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+
+export default function AppWrapper() {
+  return (
+    <Provider store={store}>
+      <App />
+    </Provider>
+  )
+}

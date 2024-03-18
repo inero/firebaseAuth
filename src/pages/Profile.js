@@ -1,9 +1,5 @@
-// import * as ImagePicker from "expo-image-picker";
-
 import {
-	Alert,
 	Image,
-	Platform,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -11,10 +7,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firebase } from "../../firebase";
-import { doc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { signOut, updateProfile } from "firebase/auth";
-
+import { updateProfile } from "firebase/auth";
 import Dialog from "react-native-dialog";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
@@ -26,16 +19,9 @@ const auth = firebase.getAuth();
 
 const Profile = () => {
 	const [modalVisible, setModalVisible] = useState(false);
-
-	const [nickname, setNickname] = useState("");
-	const [photoURL, setPhotoURL] = useState(null);
-
-	// const [easterEgg, setEasterEgg] = useState(0);
-
+	const [nickname, setNickname] = useState(auth?.currentUser?.displayName);
 	const [budgetModalVisible, setBudgetModalVisible] = useState(false);
-	const [budget, setBudget] = useState(0);
-
-	const platform = Platform.OS;
+	const [budget, setBudget] = useState(auth?.currentUser?.photoURL);
 
 	useEffect(() => {
 		readData();
@@ -43,38 +29,43 @@ const Profile = () => {
 
 	const readData = async () => {
 		const value = await AsyncStorage.getItem('@budget');
-	
 		if (value !== null) {
 			setBudget(value);
 		}
 	};
 
-	const changerPhoto = async () => {
-		// const result = await ImagePicker.launchImageLibraryAsync({
-		// 	mediaTypes: "Images",
-		// 	allowsEditing: true,
-		// });
+	const updateProfileData = (displayName) => {
+		updateProfile(auth.currentUser, {
+			displayName
+		}).then(() => {
+			setNickname(nickname);
+		}).catch((error) => {
+			showMessage({
+				message: "Something went wrong! try again later..",
+				type: "danger",
+			});
+		});
+	};
 
-		// if (result.cancelled) return;
+	const writeBudget = async (value) => {
+		await AsyncStorage.setItem(
+			'@budget',
+			budget,
+		);
 
-		// // Référence de l'image
-		// const newImageRef = ref(
-		// 	storage,
-		// 	`images/profile/${auth?.currentUser?.uid}.png`
-		// );
-
-		// // Conversion de l'image en bytes
-		// const r = await fetch(result.uri);
-		// const blob = await r.blob();
-
-		// await uploadBytesResumable(newImageRef, blob);
-
-		// const downloadURL = await getDownloadURL(newImageRef);
-		// await updateProfile(auth?.currentUser, {
-		// 	photoURL: downloadURL,
-		// });
-
-		// setPhotoURL(downloadURL);
+		if (value !== null) {
+			updateProfile(auth.currentUser, {
+				photoURL: value
+			}).then(() => {
+				setBudget(value);
+				setBudgetModalVisible(!budgetModalVisible)
+			}).catch((error) => {
+				showMessage({
+					message: "Something went wrong! try again later..",
+					type: "danger",
+				});
+			});
+		}
 	};
 
 	const changeNickname = async (nickname) => {
@@ -103,50 +94,20 @@ const Profile = () => {
 			return;
 		}
 
-		await auth?.currentUser?.updateProfile({
-			displayName: nickname,
-		});
-		// await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-		// 	username: nickname,
-		// });
-
-		setNickname(nickname);
+		updateProfileData(nickname);
 	};
-
-	if (!photoURL && auth?.currentUser?.photoURL) {
-		setPhotoURL(auth.currentUser.photoURL);
-	}
 
 	const handleSignOut = async () => {
-		await AsyncStorage.clear();
 		auth
-		  .signOut()
-		  .then(() => {
-			navigation.replace("Home");
-		  })
-		  .catch((error) => {
-			console.log(error);
-		  });
+			.signOut()
+			.then(async () => {
+				await AsyncStorage.clear();
+				navigation.replace("Home");
+			})
+			.catch((error) => {
+				console.log(error);
+			});
 	};
-
-	// const checkEasterEgg = async () => {
-	// 	setEasterEgg(easterEgg + 1);
-	// 	if (easterEgg === 4) {
-	// 		const downloadURL = await getDownloadURL(
-	// 			ref(storage, `images/profile/easterEgg.png`)
-	// 		);
-	// 		await updateProfile(auth?.currentUser, {
-	// 			photoURL: downloadURL,
-	// 		});
-	// 		setPhotoURL(downloadURL);
-	// 		showMessage({
-	// 			message: "A good bath is a good golden bath!",
-	// 			type: "warning",
-	// 			duration: 5000,
-	// 		});
-	// 		setEasterEgg(0);
-	// 	}
-	// };
 
 	const { showActionSheetWithOptions } = useActionSheet(); // Menu changer photo
 
@@ -161,31 +122,22 @@ const Profile = () => {
 						},
 						async (index) => {
 							if (index === 0) {
-								changerPhoto();
+								//changerPhoto();
 							}
 						}
 					);
 				}}>
 				<View style={styles.profileImage}>
-					{!photoURL && (
-						<Image
-							source={require("../../assets/exptra-logo.png")}
-							style={styles.image}
-							resizeMode="cover"
-						/>
-					)}
-					{photoURL && (
-						<Image
-							source={{ uri: photoURL }}
-							style={styles.image}
-							resizeMode="cover"
-						/>
-					)}
+					<Image
+						source={require("../../assets/exptra-logo.png")}
+						style={styles.image}
+						resizeMode="cover"
+					/>
 				</View>
 			</TouchableOpacity>
 
 			<View>
-				<Text style={styles.username}>Hello, {auth?.currentUser?.displayName}</Text>
+				<Text style={styles.username}>Hello, {nickname}</Text>
 			</View>
 
 			<View style={styles.menu}>
@@ -219,31 +171,30 @@ const Profile = () => {
 				</TouchableOpacity>
 			</View>
 
-			{platform === "android" && (
-				<Dialog.Container
-					visible={modalVisible}
-					onBackdropPress={() => {
-						setModalVisible(false);
-					}}>
-					<Dialog.Title>Change nickname</Dialog.Title>
-					<Dialog.Input
-						placeholder="New nickname"
-						onChangeText={setNickname}
-						maxLength={20}
-					/>
-					<Dialog.Button
-						label="Close"
-						onPress={() => setModalVisible(false)}
-					/>
-					<Dialog.Button
-						label="Confirm"
-						onPress={async () => {
-							await changeNickname(nickname);
-							setModalVisible(!modalVisible);
-						}}
-					/>
-				</Dialog.Container>
-			)}
+			<Dialog.Container
+				visible={modalVisible}
+				onBackdropPress={() => {
+					setModalVisible(false);
+				}}>
+				<Dialog.Title>Change nickname</Dialog.Title>
+				<Dialog.Input
+					value={nickname}
+					placeholder="New nickname"
+					onChangeText={setNickname}
+					maxLength={20}
+				/>
+				<Dialog.Button
+					label="Close"
+					onPress={() => setModalVisible(false)}
+				/>
+				<Dialog.Button
+					label="Confirm"
+					onPress={() => {
+						changeNickname(nickname);
+						setModalVisible(!modalVisible);
+					}}
+				/>
+			</Dialog.Container>
 
 			{budgetModalVisible && (<Dialog.Container
 				visible={budgetModalVisible}
@@ -264,11 +215,7 @@ const Profile = () => {
 				/>
 				<Dialog.Button
 					label="Confirm"
-					onPress={async () => {
-						await AsyncStorage.setItem('@budget',budget);
-						setBudget(budget);
-						setBudgetModalVisible(!budgetModalVisible);
-					}}
+					onPress={() => writeBudget(budget)}
 				/>
 			</Dialog.Container>)}
 

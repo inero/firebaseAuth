@@ -10,39 +10,30 @@ import {
 	View,
 } from "react-native";
 import {
-	Timestamp,
-	addDoc,
-	collection,
-	orderBy,
-	query,
-	updateDoc,
+	Timestamp
 } from "firebase/firestore";
 import { firebase } from "../../firebase";
-
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import RNPickerSelect from "react-native-picker-select";
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
-import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useState } from "react";
+import { addExpense } from "../redux/actions";
+import { useSelector, useDispatch } from 'react-redux';
 
-const grayPlaceholder = Platform.OS === "ios" ? "#bebec0" : "#a3a3a3";
 
-// function that takes a date and returns its string value in format dd/mm/yyyy
 function formatDate(date) {
 	const day = date.getDate();
 	const month = date.getMonth() + 1;
 	const year = date.getFullYear();
-	return `${day < 10 ? "0" + day : day}/${
-		month < 10 ? "0" + month : month
-	}/${year}`;
+	return `${day < 10 ? "0" + day : day}/${month < 10 ? "0" + month : month
+		}/${year}`;
 }
 
-const auth = firebase.getAuth();
-
 const NewExpense = ({ navigation }) => {
-	const user = auth?.currentUser;
+	const dispatch = useDispatch();
+	const categories = useSelector((state) => state.categories);
 
 	const [category, setCategory] = useState("");
 	const [expense, setExpense] = useState("");
@@ -51,16 +42,8 @@ const NewExpense = ({ navigation }) => {
 	const [date, setDate] = useState(new Date());
 	const [show, setShow] = useState(false);
 
-	const usersCollectionRef = []; //collection(db, "users", user.uid, "expenses");
-
-	const createExpense = async () => {
-		if (
-			!(
-				category.trim().length > 0 &&
-				expense.trim().length > 0 &&
-				amount.trim().length > 0
-			)
-		) {
+	const createExpense = () => {
+		if (!(expense.trim().length > 0 && amount.trim().length > 0)) {
 			showMessage({
 				message: "Please fill all fields",
 				type: "danger",
@@ -76,37 +59,30 @@ const NewExpense = ({ navigation }) => {
 			return;
 		}
 
-		await addDoc(usersCollectionRef, {
-			nom: expense,
-			amount: parseFloat(amount),
-			category,
-			date: Timestamp.fromDate(date),
-		}).then(async (docRef) => {
-			await updateDoc(docRef, { id: docRef.id });
-			showMessage({
-				message: "Expense added successfully!",
-				type: "success",
-			});
-		});
+		dispatch(
+			addExpense({
+				name: expense,
+				amount: parseFloat(amount),
+				category: category,
+				date: formatDate(date),
+			})
+		);
+		setCategory("");
+		setExpense("");
+		setAmount("");
+		setDate(new Date());
+		navigation.navigate('Dashboard');
 	};
-
-	const [categories, loading, error] = [];
-	// useCollectionData(
-	// 	query(
-	// 		collection(db, "users", user.uid, "categories"),
-	// 		orderBy("nom", "asc")
-	// 	)
-	// );
 
 	return (
 		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
 			<KeyboardAvoidingView
 				style={styles.container}
-				behavior={Platform.OS === "ios" ? "padding" : undefined}>
+				behavior={undefined}>
 				<View style={styles.form}>
 					<View>
 						<View style={{ justifyContent: "center" }}>
-							{categories && categories.every((category) => category.id) && (
+							{categories.length > 0 && categories.every((category) => category.id) && (
 								<RNPickerSelect
 									style={picker}
 									useNativeAndroidPickerStyle={false}
@@ -118,7 +94,7 @@ const NewExpense = ({ navigation }) => {
 									}}
 									items={categories?.map((category) => ({
 										key: category.id,
-										label: category.nom,
+										label: category.name,
 										value: category.id,
 									}))}
 								/>
@@ -154,11 +130,11 @@ const NewExpense = ({ navigation }) => {
 
 					<TouchableOpacity onPress={() => setShow(true)}>
 						<View style={styles.datePicker}>
-							<Text style={{ color: grayPlaceholder }}>{formatDate(date)}</Text>
+							<Text style={{ color: '#a3a3a3' }}>{formatDate(date)}</Text>
 							<Ionicons
 								name="calendar-outline"
 								size={20}
-								color={grayPlaceholder}
+								color={'#a3a3a3'}
 								style={styles.calendarIcon}
 							/>
 						</View>
@@ -175,15 +151,7 @@ const NewExpense = ({ navigation }) => {
 					)}
 
 					<TouchableOpacity
-						onPress={() => {
-							createExpense().then(() => {
-								Keyboard.dismiss();
-								setCategory("");
-								setExpense("");
-								setAmount("");
-								setDate(new Date());
-							});
-						}}>
+						onPress={() => createExpense()}>
 						<View style={styles.button}>
 							<Text style={styles.buttonText}>Add</Text>
 						</View>
@@ -259,7 +227,7 @@ const styles = StyleSheet.create({
 
 const picker = StyleSheet.create({
 	placeholder: {
-		color: grayPlaceholder,
+		color: '#a3a3a3',
 	},
 
 	inputAndroidContainer: {

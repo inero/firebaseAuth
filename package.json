@@ -45,7 +45,10 @@
     "react-native-sms": "^1.11.0",
     "react-native-svg": "14.1.0",
     "react-native-swipe-list-view": "^3.2.9",
-    "react-native-web": "~0.19.6"
+    "react-native-uuid": "^2.0.2",
+    "react-native-web": "~0.19.6",
+    "react-redux": "^7.2.9",
+    "redux": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
