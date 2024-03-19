@@ -4,21 +4,26 @@ import {
 	TextInput,
 	TouchableOpacity,
 	View,
+	TouchableWithoutFeedback,
+	Keyboard,
+	KeyboardAvoidingView,
+	FlatList,
 } from "react-native";
-import { firebase } from "../../firebase";
 import { showMessage } from "react-native-flash-message";
 import { useState } from "react";
 import { addCategory } from "../redux/actions";
 import { useSelector, useDispatch } from 'react-redux';
-
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { iconList } from "../utils/Icons";
 
 const NewCategory = ({ navigation }) => {
 	const categories = useSelector((state) => state.categories);
 	const dispatch = useDispatch();
 
 	const [name, setName] = useState("");
+	const [icon, setIcon] = useState("");
 
-	const createCategory = async (catName) => {
+	const createCategory = (catName, catIcon) => {
 		if (!(catName.trim().length > 0)) {
 			showMessage({
 				message: "Please complete all fields",
@@ -26,34 +31,65 @@ const NewCategory = ({ navigation }) => {
 			});
 			return;
 		}
-		dispatch(
-			addCategory({
-				id: categories.length ? categories.length + 1 : 1,
-				name: catName
-			})
-		);
-		setName("");
-		navigation.goBack();
+		let cat = categories.findIndex(e => e.name === catName);
+		if (cat === -1) {
+			dispatch(
+				addCategory({
+					id: categories.length ? categories.length + 1 : 1,
+					name: catName,
+					icon: catIcon ? catIcon : 'wallet'
+				})
+			);
+			setName("");
+			setIcon("");
+			navigation.goBack();
+		} else {
+			showMessage({
+				message: "Category name already exist!",
+				type: "danger",
+			});
+		}
 	};
 
-	return (
-		<View style={styles.container}>
-			<View style={styles.form}>
-				<TextInput
-					style={styles.input}
-					placeholder="Category name"
-					onChangeText={setName}
-					maxLength={30}
-				/>
+	const renderIcons = ({ item }) => (
+		<TouchableOpacity style={styles.item} key={item.key} onPress={() => setIcon(item.name)}>
+			<Ionicons name={item.name} style={{color: icon === item.name ? 'green' : '#bfbfbf'}} size={32} />
+			<Text style={{fontSize: 10}}>{item.id}</Text>
+		</TouchableOpacity>
+	);
 
-				<TouchableOpacity
-					onPress={() =>createCategory(name)}>
-					<View style={styles.button}>
-						<Text style={styles.buttonText}>Add</Text>
+	return (
+		<TouchableWithoutFeedback onPress={null}>
+			<KeyboardAvoidingView
+				style={styles.container}
+				behavior={undefined}>
+				<View style={styles.form}>
+					<TextInput
+						style={styles.input}
+						placeholder="Category name"
+						onChangeText={setName}
+						value={name}
+						maxLength={30}
+					/>
+					<View style={styles.iconContainer}>
+						<FlatList
+							data={[...iconList].sort((a, b) => a.id > b.id)}
+							renderItem={renderIcons}
+							keyExtractor={(item) => item.key}
+							numColumns={5}
+							contentContainerStyle={styles.list}
+							extraData={icon}
+						/>
 					</View>
-				</TouchableOpacity>
-			</View>
-		</View>
+					<TouchableOpacity
+						onPress={() => createCategory(name, icon)}>
+						<View style={styles.button}>
+							<Text style={styles.buttonText}>Add</Text>
+						</View>
+					</TouchableOpacity>
+				</View>
+			</KeyboardAvoidingView>
+		</TouchableWithoutFeedback>
 	);
 };
 
@@ -64,6 +100,10 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "#ffffff",
 		alignItems: "center",
+	},
+
+	iconContainer: {
+		maxHeight: 400
 	},
 
 	input: {
@@ -107,5 +147,15 @@ const styles = StyleSheet.create({
 		color: "#5DB075",
 		marginBottom: 10,
 		marginLeft: 200,
+	},
+	list: {
+		paddingHorizontal: 16,
+		paddingTop: 16,
+	},
+	item: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		width: '21%',
+		paddingVertical: 12,
 	},
 });

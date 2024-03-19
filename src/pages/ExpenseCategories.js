@@ -1,27 +1,15 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { firebase } from "../../firebase";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SwipeListView } from "react-native-swipe-list-view";
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteExpense } from "../redux/actions";
 
-// function that takes a date and returns its string value in format dd/mm/yyyy
-function formatDate(date) {
-	const day = date.getDate();
-	const month = date.getMonth() + 1;
-	const year = date.getFullYear();
-	return `${day < 10 ? "0" + day : day}/${month < 10 ? "0" + month : month
-		}/${year}`;
-}
-
-const auth = firebase.getAuth();
 
 const ExpenseCategories = ({ navigation, route }) => {
-	const user = auth?.currentUser;
 	const dispatch = useDispatch();
-
-	const expenses = useSelector((state) => state.expenses);
+	const expList = useSelector((state) => state.expenses);
+	const expenses = expList.filter(exp => parseInt(exp.category)===parseInt(route.params.categoryId));
 
 	const renderExpense = ({ item }) => (
 		<View style={styles.expense} key={item.id}>
@@ -48,7 +36,7 @@ const ExpenseCategories = ({ navigation, route }) => {
 
 			<TouchableOpacity
 				style={[styles.backButton, styles.backButtonRR]}
-				onPress={() => deleteExpense(data.item.id)}>
+				onPress={() => deleteExpenseRecord(data.item.id)}>
 				<Ionicons name="trash-outline" color={"#FFF"} size={28} />
 			</TouchableOpacity>
 
@@ -66,7 +54,7 @@ const ExpenseCategories = ({ navigation, route }) => {
 		</View>
 	);
 
-	const deleteExpense = id => {
+	const deleteExpenseRecord = id => {
 		dispatch(deleteExpense({ id }))
 	};
 

@@ -9,10 +9,6 @@ import {
 	TouchableWithoutFeedback,
 	View,
 } from "react-native";
-import {
-	Timestamp
-} from "firebase/firestore";
-import { firebase } from "../../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import RNPickerSelect from "react-native-picker-select";
@@ -38,7 +34,6 @@ const NewExpense = ({ navigation }) => {
 	const [category, setCategory] = useState("");
 	const [expense, setExpense] = useState("");
 	const [amount, setAmount] = useState("");
-
 	const [date, setDate] = useState(new Date());
 	const [show, setShow] = useState(false);
 
@@ -59,15 +54,23 @@ const NewExpense = ({ navigation }) => {
 			return;
 		}
 
+		if (!category) {
+			showMessage({
+				message: "Please fill all fields",
+				type: "danger",
+			});
+			return;
+		}
+
 		dispatch(
 			addExpense({
 				name: expense,
 				amount: parseFloat(amount),
-				category: category,
+				category: parseInt(category),
 				date: formatDate(date),
 			})
 		);
-		setCategory("");
+		setCategory(null);
 		setExpense("");
 		setAmount("");
 		setDate(new Date());
@@ -75,37 +78,12 @@ const NewExpense = ({ navigation }) => {
 	};
 
 	return (
-		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+		<TouchableWithoutFeedback onPress={null}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>
 				<View style={styles.form}>
-					<View>
-						<View style={{ justifyContent: "center" }}>
-							{categories.length > 0 && categories.every((category) => category.id) && (
-								<RNPickerSelect
-									style={picker}
-									useNativeAndroidPickerStyle={false}
-									value={category}
-									onValueChange={setCategory}
-									placeholder={{
-										label: "Category name",
-										value: undefined,
-									}}
-									items={categories?.map((category) => ({
-										key: category.id,
-										label: category.name,
-										value: category.id,
-									}))}
-								/>
-							)}
-						</View>
-						<TouchableOpacity
-							onPress={() => navigation.navigate("NewCategory")}>
-							<Text style={styles.linkColor}>New Catetory</Text>
-						</TouchableOpacity>
-						<StatusBar style="auto" />
-					</View>
+
 
 					<View style={styles.input}>
 						<TextInput
@@ -149,6 +127,34 @@ const NewExpense = ({ navigation }) => {
 							}}
 						/>
 					)}
+
+					<View>
+						<View style={{ justifyContent: "center" }}>
+							{categories.length > 0 && categories.every((category) => category.id) && (
+								<RNPickerSelect
+									style={picker}
+									useNativeAndroidPickerStyle={false}
+									itemKey={category}
+									value={category}
+									onValueChange={(value) => setCategory(value)}
+									placeholder={{
+										label: "Category name",
+										value: undefined,
+									}}
+									items={[...categories].map((cat) => ({
+										key: cat.icon,
+										label: cat.name,
+										value: cat.id,
+									}))}
+								/>
+							)}
+						</View>
+						<TouchableOpacity
+							onPress={() => navigation.navigate("NewCategory")}>
+							<Text style={styles.linkColor}>New Catetory</Text>
+						</TouchableOpacity>
+						<StatusBar style="auto" />
+					</View>
 
 					<TouchableOpacity
 						onPress={() => createExpense()}>

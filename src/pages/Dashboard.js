@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
+import { FlatList, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firebase } from "../../firebase";
 import GaugeExpenses from "../components/GaugeExpenses";
@@ -31,6 +31,11 @@ const nextMonth = () => {
 	date.setSeconds(0);
 	date.setMilliseconds(0);
 	return date;
+};
+
+const parseDateString = (dateString) => {
+	const parts = dateString.split('/');
+	return new Date(parts[2], parts[1] - 1, parts[0]);
 };
 
 const auth = firebase.getAuth();
@@ -105,12 +110,16 @@ const Dashboard = () => {
 		? Math.round((expensesTotal() / budget) * 100)
 		: 0;
 
-	const [latestExpenses, loading, error] = [[...expenses], loading, error];
+	const latestExpenses = [...expenses].filter((exp) => {
+		const dte = parseDateString(exp.date).getMonth() + 1;
+		const thisMonth = new Date().getMonth() + 1;
+		if (dte === thisMonth) return exp;
+	});
 
 
 	const renderExpense = ({ item }) => {
-		const catName = categories.find((cat)=>{
-			if(cat.id === item.category) return cat;
+		const catName = categories.find((cat) => {
+			if (cat.id === parseInt(item.category)) return cat;
 		})
 		return (
 			<View style={styles.item}>
@@ -119,15 +128,13 @@ const Dashboard = () => {
 					<Text style={styles.name}>{item.name}</Text>
 					<Text style={styles.description}>{item.date}</Text>
 				</View>
-				<Text style={styles.amount}>{item.amount}</Text>
+				<Text style={styles.amount}>{item.amount} ₹</Text>
 			</View>
 		)
 	};
 
 	return (
-		<ScrollView contentContainerStyle={styles.container} refreshControl={
-			<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-		}>
+		<View style={styles.container}>
 			<View
 				style={[
 					styles.semi,
@@ -137,7 +144,7 @@ const Dashboard = () => {
 						backgroundColor: "#2a3e48",
 					},
 				]}>
-				{!refreshing && (<GaugeExpenses dpt={exp} max={max} percentage={percentage} />)}
+				<GaugeExpenses exp={exp} max={max} percentage={percentage} />
 				{(exp > max) &&
 					(<TouchableOpacity onPress={() => setModalVisible(true)}>
 						<View style={styles.budgetContainer}>
@@ -145,7 +152,7 @@ const Dashboard = () => {
 						</View>
 					</TouchableOpacity>)
 				}
-				<Dialog.Container
+				{/* <Dialog.Container
 					visible={modalVisible}
 					onBackdropPress={() => {
 						setModalVisible(false);
@@ -169,7 +176,7 @@ const Dashboard = () => {
 							setModalVisible(!modalVisible)
 						}}
 					/>
-				</Dialog.Container>
+				</Dialog.Container> */}
 			</View>
 
 			<View style={styles.semi}>
@@ -180,7 +187,6 @@ const Dashboard = () => {
 						<FlatList
 							style={styles.listExpenses}
 							data={latestExpenses}
-							scrollEnabled={false} 
 							renderItem={renderExpense}
 							keyExtractor={(_item, index) => index}
 							ListEmptyComponent={() => (
@@ -192,22 +198,10 @@ const Dashboard = () => {
 							)}
 						/>
 					)}
-
-					{loading && (
-						<View style={styles.container}>
-							<Text>Loading your latest expenses...</Text>
-						</View>
-					)}
-
-					{error && (
-						<View style={styles.container}>
-							<Text>Error : {JSON.stringify(error)}</Text>
-						</View>
-					)}
 				</View>
 			</View>
 			<StatusBar style="auto" />
-		</ScrollView>
+		</View>
 	);
 };
 
@@ -243,12 +237,13 @@ const styles = StyleSheet.create({
 	latestExpenses: {
 		flex: 1,
 		paddingTop: 25,
-		paddingLeft: 20, // 16 avec icône couleur
-		paddingRight: 20, // 16
+		paddingLeft: 16,
+		paddingRight: 16,
 	},
 
 	listExpenses: {
-		marginTop: 32,
+		marginTop: 12,
+		marginBottom: 50,
 	},
 
 	expense: {
@@ -270,7 +265,7 @@ const styles = StyleSheet.create({
 	icon: {
 		fontSize: 35,
 		marginRight: 16,
-		color: 'red',
+		color: 'grey',
 	},
 	details: {
 		flex: 1,
@@ -284,8 +279,8 @@ const styles = StyleSheet.create({
 		color: '#999999',
 	},
 	amount: {
-		fontSize: 18,
-		fontWeight: 'bold',
+		fontSize: 16,
+		fontWeight: '500',
 		marginLeft: 16,
 	},
 });

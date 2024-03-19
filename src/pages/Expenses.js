@@ -12,7 +12,6 @@ import {
 	deleteDoc,
 	doc,
 	getDocs,
-	orderBy,
 	query,
 	where,
 } from "firebase/firestore";
@@ -24,6 +23,7 @@ import { StatusBar } from "expo-status-bar";
 import { SwipeListView } from "react-native-swipe-list-view";
 import { useSelector } from 'react-redux';
 import { useState } from "react";
+import { months } from '../utils/Months';
 
 const auth = firebase.getAuth();
 
@@ -48,6 +48,11 @@ const nextMonth = () => {
 	date.setSeconds(0);
 	date.setMilliseconds(0);
 	return date;
+};
+
+const parseDateString = (dateString) => {
+	const parts = dateString.split('/');
+	return new Date(parts[2], parts[1] - 1, parts[0]);
 };
 
 const Expenses = ({ navigation }) => {
@@ -75,21 +80,6 @@ const Expenses = ({ navigation }) => {
 		? Math.round((expensesTotal() / budget) * 100)
 		: 0;
 
-	const months = [
-		"JAN",
-		"FEB",
-		"MAR",
-		"APR",
-		"MAY",
-		"JUN",
-		"JUL",
-		"AUG",
-		"SEP",
-		"OCT",
-		"NOV",
-		"DEC",
-	];
-
 	const calculateLastSixMonths = () => {
 		const six = [];
 		const d = new Date();
@@ -111,8 +101,8 @@ const Expenses = ({ navigation }) => {
 	const sommeLastSixMonths = lastSixMonths.map((noMonth) => {
 		if (expenses) {
 			return expenses
-				.filter((expense) => new Date(expense.date).getMonth() === noMonth)
-				.reduce((total, expense) => total + expense.amount, 0);
+				.filter((expense) => parseDateString(expense.date).getMonth() === noMonth)
+				.reduce((total, expense) => parseInt(total) + parseInt(expense.amount), 0);
 		} else {
 			return 0;
 		}
@@ -145,14 +135,15 @@ const Expenses = ({ navigation }) => {
 	};
 
 	const renderCategory = ({ item }) => {
-		const sommeExpenseCategory = expenses
+		const sumExpenseCategory = expenses
 			? expenses
 					.filter((expense) => expense.category === item.id)
 					.reduce((total, expense) => total + expense.amount, 0)
 			: 0;
-
-		const rate = sommeExpenseCategory / item.limit;
-
+		const rate = budget * sumExpenseCategory / 100;
+		if(sumExpenseCategory===0){
+			return <></>;
+		}
 		return (
 			<TouchableHighlight
 				key={item.id}
@@ -160,8 +151,8 @@ const Expenses = ({ navigation }) => {
 				underlayColor="#f5f5f5"
 				onPress={() => {
 					navigation.navigate("ExpenseCategories", {
-						categorie: item.id,
-						title: item.name,
+						categoryId: item.id,
+						categoryName: item.name,
 					});
 				}}>
 				<>
@@ -169,26 +160,24 @@ const Expenses = ({ navigation }) => {
 					<View
 						style={{ flexDirection: "row", fontSize: 16, paddingRight: 10 }}>
 						{rate < 0.7 && (
-							<Text style={{ color: "green" }}>{sommeExpenseCategory} ₹</Text>
+							<Text style={{ color: "green" }}>{sumExpenseCategory} ₹</Text>
 						)}
 
 						{rate >= 0.7 && rate < 0.9 && (
 							<Text style={{ color: "#e67e00" }}>
-								{sommeExpenseCategory} ₹
+								{sumExpenseCategory} ₹
 							</Text>
 						)}
 
 						{rate >= 0.9 && rate < 1 && (
-							<Text style={{ color: "red" }}>{sommeExpenseCategory} ₹</Text>
+							<Text style={{ color: "red" }}>{sumExpenseCategory} ₹</Text>
 						)}
 
 						{rate >= 1.0 && (
 							<Text style={{ color: "#8c1818" }}>
-								{sommeExpenseCategory} ₹
+								{sumExpenseCategory} ₹
 							</Text>
 						)}
-
-						<Text> / {item.limit} ₹</Text>
 					</View>
 				</>
 			</TouchableHighlight>
@@ -249,16 +238,15 @@ const Expenses = ({ navigation }) => {
 					styles.container,
 					{ backgroundColor: "#5BB774" },
 				]}>
-				<GaugeExpenses dpt={exp} max={max} percentage={percentage} />
+				<GaugeExpenses exp={exp} max={max} percentage={percentage} />
 			</View>
 
-			{/* Graphique */}
 			<View style={styles.slide2}>
 				<LineChart
 					data={data}
 					width={Dimensions.get("window").width}
-					height={256}
-					verticalLabelRotation={30}
+					height={230}
+					verticalLabelRotation={0}
 					chartConfig={chartConfig}
 					bezier
 				/>
@@ -275,6 +263,7 @@ const Expenses = ({ navigation }) => {
 
 				{categories && categories.length > 0 && (
 					<SwipeListView
+						style={styles.swipeListView}
 						useFlatList={true}
 						data={categories}
 						renderItem={renderCategory}
@@ -327,9 +316,7 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 	},
 
-	// Catégories
-
-	categorie: {
+	category: {
 		flexDirection: "row",
 		minWidth: "60%",
 		justifyContent: "space-between",
@@ -358,18 +345,22 @@ const styles = StyleSheet.create({
 	},
 
 	backButtonL: {
-		backgroundColor: "orange",
+		backgroundColor: "grey",
 	},
 
 	backButtonRL: {
-		backgroundColor: "blue",
+		backgroundColor: "grey",
 		right: 75,
 	},
 
 	backButtonRR: {
-		backgroundColor: "red",
+		backgroundColor: "#515050",
 		right: 0,
 	},
+
+	swipeListView: {
+		paddingTop: 15,
+	}
 });
 
 export default Expenses;
