@@ -8,7 +8,6 @@ import {
 	TouchableWithoutFeedback,
 	View,
 } from "react-native";
-
 import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
 import { useState, useEffect } from "react";
@@ -22,9 +21,9 @@ const Login = ({ navigation }) => {
 
 	useEffect(() => {
 		const unsubscribe = auth.onAuthStateChanged((user) => {
-		  if (user) {
-			navigation.goBack();
-		  }
+			if (user) {
+				navigation.goBack();
+			}
 		});
 		return unsubscribe;
 	}, []);

@@ -1,37 +1,30 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { firebase } from "../../firebase";
-import { collection, deleteDoc, doc, query, where } from "firebase/firestore";
-
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteExpense } from "../redux/actions";
 
 // function that takes a date and returns its string value in format dd/mm/yyyy
 function formatDate(date) {
 	const day = date.getDate();
 	const month = date.getMonth() + 1;
 	const year = date.getFullYear();
-	return `${day < 10 ? "0" + day : day}/${
-		month < 10 ? "0" + month : month
-	}/${year}`;
+	return `${day < 10 ? "0" + day : day}/${month < 10 ? "0" + month : month
+		}/${year}`;
 }
 
 const auth = firebase.getAuth();
 
 const ExpenseCategories = ({ navigation, route }) => {
 	const user = auth?.currentUser;
+	const dispatch = useDispatch();
 
-	const [expenses] = [];
-	// useCollectionData(
-	// 	query(
-	// 		collection(db, "users", user.uid, "expenses"),
-	// 		where("category", "==", route.params.category)
-	// 	)
-	// );
+	const expenses = useSelector((state) => state.expenses);
 
 	const renderExpense = ({ item }) => (
-		<View style={styles.expense}>
+		<View style={styles.expense} key={item.id}>
 			<Text style={{ flex: 1, fontSize: 16, paddingLeft: 10 }}>{item.name}</Text>
 			<View
 				style={{
@@ -39,25 +32,23 @@ const ExpenseCategories = ({ navigation, route }) => {
 					flexDirection: "row",
 					justifyContent: "space-between",
 				}}>
-				<Text style={{ fontSize: 16 }}>{formatDate(item.date.toDate())}</Text>
+				<Text style={{ fontSize: 16 }}>{item.date}</Text>
 				<Text style={{ fontSize: 16, paddingRight: 10 }}>{item.amount} ₹</Text>
 			</View>
 		</View>
 	);
 
 	const renderSwipeButtons = (data, map) => (
-		<View style={styles.swipeButtons}>
+		<View style={styles.swipeButtons} key={data.item.id}>
 			<TouchableOpacity
 				style={[styles.backButton, styles.backButtonRL]}
 				onPress={() => map[data.item.id].closeRow()}>
-				<Text style={{ color: "white" }}>Fermer</Text>
+				<Text style={{ color: "white" }}>Close</Text>
 			</TouchableOpacity>
 
 			<TouchableOpacity
 				style={[styles.backButton, styles.backButtonRR]}
-				onPress={async () => {
-					await deleteExpense(data.item.id);
-				}}>
+				onPress={() => deleteExpense(data.item.id)}>
 				<Ionicons name="trash-outline" color={"#FFF"} size={28} />
 			</TouchableOpacity>
 
@@ -75,8 +66,8 @@ const ExpenseCategories = ({ navigation, route }) => {
 		</View>
 	);
 
-	const deleteExpense = async (id) => {
-		await deleteDoc(doc(db, "users", user.uid, "expenses", id));
+	const deleteExpense = id => {
+		dispatch(deleteExpense({ id }))
 	};
 
 	return (

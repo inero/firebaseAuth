@@ -180,6 +180,7 @@ const Profile = () => {
 				<Dialog.Input
 					value={nickname}
 					placeholder="New nickname"
+					style={styles.dialogInput}
 					onChangeText={setNickname}
 					maxLength={20}
 				/>
@@ -205,6 +206,7 @@ const Profile = () => {
 				<Dialog.Input
 					value={budget}
 					placeholder="Budget"
+					style={styles.dialogInput}
 					onChangeText={setBudget}
 					maxLength={20}
 					keyboardType={"numeric"}
@@ -289,6 +291,10 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: "500",
 	},
+
+	dialogInput: {
+		color: 'black',
+	}
 });
 
 export default Profile;

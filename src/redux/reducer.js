@@ -43,15 +43,7 @@ const expenseReducer = (state = initialState, action) => {
         case LOAD_ACCOUNTS:
             return {
                 ...state,
-                accounts: [{
-                    id: 1,
-                    name: 'SBI SAVINGS',
-                    balance: '2000'
-                },{
-                    id: 2,
-                    name: 'HDFC ACCOUNT',
-                    limit: '10000'
-                }]
+                accounts: [...state.accounts]
             };
         case ADD_EXPENSE:
             return {
@@ -63,11 +55,50 @@ const expenseReducer = (state = initialState, action) => {
                 ...state,
                 categories: [...state.categories, action.payload]
             };
-        case ADD_CATEGORY:
+        case ADD_ACCOUNT:
             return {
                 ...state,
                 accounts: [...state.accounts, action.payload]
             };
+        case EDIT_ACCOUNT:{
+            let act = state.accounts.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.accounts];
+            newList[act].name = action.payload.name;
+            newList[act].amount = action.payload.amount;
+            return { ...state, accounts: newList }
+        }
+        case EDIT_CATEGORY:{
+            let cat = state.categories.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.categories];
+            newList[cat].name = action.payload.name;
+            newList[cat].icon = action.payload.icon;
+            return { ...state, categories: newList }
+        }
+        case EDIT_EXPENSE: {
+            let exp = state.expenses.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.expenses];
+            newList[exp].name = action.payload.name;
+            newList[exp].amount = action.payload.amount;
+            return { ...state, expenses: newList }
+        }
+        case DELETE_ACCOUNT:{
+            let act = state.accounts.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.accounts];
+            newList.splice(act, 1);
+            return { ...state, accounts: newList }
+        }
+        case DELETE_CATEGORY:{
+            let cat = state.categories.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.categories];
+            newList.splice(cat, 1);
+            return { ...state, categories: newList }
+        }
+        case DELETE_EXPENSE: {
+            let exp = state.expenses.findIndex(e => e.id===action.payload.id);
+            let newList = [...state.expenses];
+            newList.splice(exp, 1);
+            return { ...state, expenses: newList }
+        }
         default:
             return state;
     }

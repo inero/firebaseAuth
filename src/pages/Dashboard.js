@@ -42,7 +42,6 @@ const Dashboard = () => {
 
 	const expenses = useSelector((state) => state.expenses);
 	const categories = useSelector((state) => state.categories);
-	const limit = useSelector((state) => state.budget);
 
 	useEffect(() => {
 		loadDashboardData();
@@ -82,11 +81,7 @@ const Dashboard = () => {
 	};
 
 	const readBudget = async () => {
-		// const value = await AsyncStorage.getItem('@budget');
-
-		// if (value !== null) {
 		setBudget(auth?.currentUser?.photoURL);
-		// }
 	};
 
 	const user = auth?.currentUser;
@@ -191,7 +186,7 @@ const Dashboard = () => {
 							ListEmptyComponent={() => (
 								<View style={styles.container}>
 									<Text>
-										You have no expenses. What if you added one?
+										You have no expense. Start adding your expenses!
 									</Text>
 								</View>
 							)}
@@ -227,7 +222,7 @@ const styles = StyleSheet.create({
 	semi: { flex: 1, alignSelf: "stretch" },
 
 	title: {
-		fontSize: 24,
+		fontSize: 22,
 		fontWeight: "500",
 		alignSelf: "flex-start",
 	},
