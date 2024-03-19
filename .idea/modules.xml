@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/firebaseAuth.iml" filepath="$PROJECT_DIR$/.idea/firebaseAuth.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/exptra.iml" filepath="$PROJECT_DIR$/.idea/exptra.iml" />
     </modules>
   </component>
 </project>
