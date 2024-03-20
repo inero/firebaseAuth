@@ -78,13 +78,11 @@ const NewExpense = ({ navigation }) => {
 	};
 
 	return (
-		<TouchableWithoutFeedback onPress={null}>
+		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>
 				<View style={styles.form}>
-
-
 					<View style={styles.input}>
 						<TextInput
 							style={{ height: 50 }}

@@ -53,13 +53,13 @@ const NewCategory = ({ navigation }) => {
 
 	const renderIcons = ({ item }) => (
 		<TouchableOpacity style={styles.item} key={item.key} onPress={() => setIcon(item.name)}>
-			<Ionicons name={item.name} style={{color: icon === item.name ? 'green' : '#bfbfbf'}} size={32} />
-			<Text style={{fontSize: 10}}>{item.id}</Text>
+			<Ionicons name={item.name} style={{ color: icon === item.name ? 'green' : '#bfbfbf' }} size={32} />
+			<Text style={{ fontSize: 10 }}>{item.id}</Text>
 		</TouchableOpacity>
 	);
 
 	return (
-		<TouchableWithoutFeedback onPress={null}>
+		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>

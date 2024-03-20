@@ -4,34 +4,11 @@ import { firebase } from "../../firebase";
 import GaugeExpenses from "../components/GaugeExpenses";
 import { StatusBar } from "expo-status-bar";
 import Dialog from "react-native-dialog";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useSelector } from 'react-redux';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { updateProfile } from "firebase/auth";
 
-
-// function that returns date of last day of previous month
-const previousMonth = () => {
-	const date = new Date();
-	date.setDate(0);
-	date.setHours(23);
-	date.setMinutes(59);
-	date.setSeconds(59);
-	date.setMilliseconds(999);
-	return date;
-};
-
-// function that returns date of first day of next month
-const nextMonth = () => {
-	const date = new Date();
-	date.setDate(1);
-	date.setMonth(date.getMonth() + 1);
-	date.setHours(0);
-	date.setMinutes(0);
-	date.setSeconds(0);
-	date.setMilliseconds(0);
-	return date;
-};
 
 const parseDateString = (dateString) => {
 	const parts = dateString.split('/');
@@ -41,29 +18,12 @@ const parseDateString = (dateString) => {
 const auth = firebase.getAuth();
 
 const Dashboard = () => {
-	const [refreshing, setRefreshing] = useState(false);
 	const [modalVisible, setModalVisible] = useState(false);
-	const [budget, setBudget] = useState(0);
+	const [budget, setBudget] = useState(auth?.currentUser?.photoURL);
+	const [reportMonth] = useState(parseInt(new Date().getMonth() + 1));
 
 	const expenses = useSelector((state) => state.expenses);
 	const categories = useSelector((state) => state.categories);
-
-	useEffect(() => {
-		loadDashboardData();
-	}, []);
-
-	const loadDashboardData = () => {
-		readBudget();
-	}
-
-	const onRefresh = useCallback(() => {
-		setRefreshing(true);
-		loadDashboardData();
-		setTimeout(() => {
-			setRefreshing(false);
-		}, 1000);
-	}, []);
-
 
 	const writeBudget = async (value) => {
 		await AsyncStorage.setItem(
@@ -85,23 +45,12 @@ const Dashboard = () => {
 		}
 	};
 
-	const readBudget = async () => {
-		setBudget(auth?.currentUser?.photoURL);
-	};
-
-	const user = auth?.currentUser;
-
 	const expensesTotal = () => {
-		const p = previousMonth();
-		const n = nextMonth();
-
-		return expenses.filter((expense) => {
-			const d = expense.date ? new Date() : new Date();
-			d.setMilliseconds(0);
-
-			return d > p && d < n;
-		})
-			.reduce((total, expense) => parseInt(total) + parseInt(expense.amount), 0);
+		return expenses.filter((exp) => {
+			const dte = parseDateString(exp.date).getMonth() + 1;
+			const thisMonth = new Date().getMonth() + 1;
+			if (dte === thisMonth) return exp;
+		}).reduce((total, exp) => parseInt(total) + parseInt(exp.amount), 0);
 	};
 
 	const exp = expenses ? expensesTotal() : 0;
@@ -144,7 +93,7 @@ const Dashboard = () => {
 						backgroundColor: "#2a3e48",
 					},
 				]}>
-				<GaugeExpenses exp={exp} max={max} percentage={percentage} />
+				<GaugeExpenses exp={exp} max={max} percentage={percentage} month={reportMonth} />
 				{(exp > max) &&
 					(<TouchableOpacity onPress={() => setModalVisible(true)}>
 						<View style={styles.budgetContainer}>
@@ -152,7 +101,7 @@ const Dashboard = () => {
 						</View>
 					</TouchableOpacity>)
 				}
-				{/* <Dialog.Container
+				<Dialog.Container
 					visible={modalVisible}
 					onBackdropPress={() => {
 						setModalVisible(false);
@@ -176,7 +125,7 @@ const Dashboard = () => {
 							setModalVisible(!modalVisible)
 						}}
 					/>
-				</Dialog.Container> */}
+				</Dialog.Container>
 			</View>
 
 			<View style={styles.semi}>
@@ -236,7 +185,7 @@ const styles = StyleSheet.create({
 
 	latestExpenses: {
 		flex: 1,
-		paddingTop: 25,
+		paddingTop: 15,
 		paddingLeft: 16,
 		paddingRight: 16,
 	},

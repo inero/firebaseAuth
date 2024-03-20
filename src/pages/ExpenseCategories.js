@@ -6,10 +6,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { deleteExpense } from "../redux/actions";
 
 
+const parseDateString = (dateString) => {
+	const parts = dateString.split('/');
+	return new Date(parts[2], parts[1] - 1, parts[0]);
+};
+
 const ExpenseCategories = ({ navigation, route }) => {
 	const dispatch = useDispatch();
 	const expList = useSelector((state) => state.expenses);
-	const expenses = expList.filter(exp => parseInt(exp.category)===parseInt(route.params.categoryId));
+	const expenses = expList.filter(exp => parseInt(exp.category) === parseInt(route.params.categoryId));
+	const reportMonth = parseInt(route.params.monthId);
 
 	const renderExpense = ({ item }) => (
 		<View style={styles.expense} key={item.id}>
@@ -72,7 +78,7 @@ const ExpenseCategories = ({ navigation, route }) => {
 				{expenses && expenses.length > 0 && (
 					<SwipeListView
 						useFlatList={true}
-						data={[...expenses].sort((a, b) => a.name > b.name)}
+						data={[...expenses].filter((expense) => parseDateString(expense.date).getMonth() === reportMonth).sort((a, b) => a.name > b.name)}
 						renderItem={renderExpense}
 						renderHiddenItem={renderSwipeButtons}
 						keyExtractor={(item) => item.id}

@@ -8,14 +8,9 @@ const Stack = createNativeStackNavigator();
 const Routes = ({ user }) => {
 	return (
 		<NavigationContainer>
-			<Stack.Navigator
-				screenOptions={{
-					headerShown: false,
-				}}>
+			<Stack.Navigator screenOptions={{ headerShown: false }}>
 				{!user && <Stack.Screen name="GuestStack" component={GuestStack} />}
-				{user && (
-					<Stack.Screen name="AuthenticatedTab" component={AuthenticatedTab} />
-				)}
+				{user && <Stack.Screen name="AuthenticatedTab" component={AuthenticatedTab} />}
 			</Stack.Navigator>
 		</NavigationContainer>
 	);
