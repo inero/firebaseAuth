@@ -2,23 +2,24 @@ import 'react-native-gesture-handler';
 import FlashMessage from "react-native-flash-message";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import Routes from "./src/routes/Routes";
-import { firebase } from "./firebase";
+import { firebase, auth } from "./firebase";
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from './src/redux/store';
 import { loadCategories, loadExpenses } from "./src/redux/actions";
 import { useDispatch } from 'react-redux';
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const App = () => {
-  const auth = firebase.getAuth();
-
-  const [currentUser, setCurrentUser] = useState(auth?.currentUser);
+  // const auth = firebase.getAuth();
+  const [currentUser] = useAuthState(auth);
+  // const [currentUser] = useState(auth?.currentUser);
   const [initializing, setInitializing] = useState(true);
   const dispatch = useDispatch();
 
   const onAuthStateChangedHandler = (user) => {
-    setCurrentUser(user);
+    // setCurrentUser(user);
     if (initializing) {
       setInitializing(false);
     }

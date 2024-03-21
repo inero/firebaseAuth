@@ -12,6 +12,8 @@ import { StatusBar } from "expo-status-bar";
 import { showMessage } from "react-native-flash-message";
 import { useState, useEffect } from "react";
 import { firebase } from "../../firebase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 const Login = ({ navigation }) => {
 	const [email, setEmail] = useState("");
@@ -28,19 +30,38 @@ const Login = ({ navigation }) => {
 		return unsubscribe;
 	}, []);
 
-	const login = (email, password) => {
+	const login = async (email, password) => {
+		if (email.length === 0 || password.length === 0) {
+			showMessage({
+				message: "Please enter a username",
+				type: "danger",
+			});
+			return;
+		}
+		if (email !== email.trim()) {
+			showMessage({
+				message: "Please do not enter spaces for your username",
+				type: "danger",
+			});
+			return;
+		}
+
 		const auth = firebase.getAuth();
 		firebase.signInWithEmailAndPassword(auth, email, password)
-			.then((userCredential) => {
+			.then(async (userCredential) => {
 				const user = userCredential.user;
+				if (!user.emailVerified) {
+					navigation.navigate("EmailValidation");
+				}
+				await AsyncStorage.setItem('@loggedIn', 'yes');
 			})
-			.catch((error) => {
+			.catch((e) => {
 				showMessage({ message: e.message, type: "danger" });
 			});
 	};
 
 	return (
-		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+		<TouchableWithoutFeedback onPress={null}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>
@@ -64,7 +85,13 @@ const Login = ({ navigation }) => {
 							onChangeText={setPassword}
 						/>
 					</View>
-
+					<TouchableOpacity>
+						<Text
+							style={styles.forgot}
+							onPress={() => navigation.navigate("Forgot")}>
+							Forgot password?
+						</Text>
+					</TouchableOpacity>
 					<TouchableOpacity
 						onPress={() => {
 							login(email, password);
@@ -72,7 +99,8 @@ const Login = ({ navigation }) => {
 						<View style={styles.button}>
 							<Text style={styles.buttonText}>Login</Text>
 						</View>
-
+					</TouchableOpacity>
+					<TouchableOpacity>
 						<Text
 							style={styles.already}
 							onPress={() => navigation.navigate("Registration")}>
@@ -137,6 +165,13 @@ const styles = StyleSheet.create({
 		color: "blue",
 		textDecorationLine: "underline",
 		marginTop: 20,
+		alignSelf: "center",
+	},
+
+	forgot: {
+		color: "blue",
+		textDecorationLine: "underline",
+		marginBottom: 15,
 		alignSelf: "center",
 	},
 });

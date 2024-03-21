@@ -59,7 +59,7 @@ const NewCategory = ({ navigation }) => {
 	);
 
 	return (
-		<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+		<TouchableWithoutFeedback onPress={null}>
 			<KeyboardAvoidingView
 				style={styles.container}
 				behavior={undefined}>

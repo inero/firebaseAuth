@@ -101,7 +101,7 @@ const Dashboard = () => {
 						</View>
 					</TouchableOpacity>)
 				}
-				<Dialog.Container
+				{/* <Dialog.Container
 					visible={modalVisible}
 					onBackdropPress={() => {
 						setModalVisible(false);
@@ -125,7 +125,7 @@ const Dashboard = () => {
 							setModalVisible(!modalVisible)
 						}}
 					/>
-				</Dialog.Container>
+				</Dialog.Container> */}
 			</View>
 
 			<View style={styles.semi}>

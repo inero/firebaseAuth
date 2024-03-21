@@ -22,14 +22,17 @@
         "foregroundImage": "./assets/android-chrome-512x512.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.immanuelkirubaharan.exptra"
+      "package": "com.immanuelkirubaharan.exptra",
+      "permissions": [
+        "READ_SMS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.ico"
     },
     "extra": {
       "eas": {
-        "projectId": "e61398ac-41c8-4d19-bfbf-cf155e907dbb"
+        "projectId": "25afff23-a533-497d-a951-d57456f44dbf"
       }
     }
   }
